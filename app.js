@@ -1,18 +1,53 @@
-const express = require('express')
-const mongoose = require('mongoose')
+const path = require("path");
 
-const app = express()
+const express = require("express");
+const mongoose = require("mongoose");
+const bodyParser = require("body-parser");
 
-app.use('/', (req, res, next) => {
-  res.status(200).json({ message: "bisami ini, test success " });
-})
+const userRoute = require("./routes/user-route");
+const HttpError = require("./models/http-error");
 
-const url = 'mongodb://127.0.0.1:27017/unhasta';
+const app = express();
+
+app.use(express.json({ limit: "20mb" }));
+app.use(express.urlencoded({ extended: false, limit: "20mb" }));
+
+app.use("/uploads/images", express.static(path.join("uploads", "images")));
+
+app.use((req, res, next) => {
+  res.setHeader("Access-Control-Allow-Origin", "*"); // semua url disinkan
+  res.setHeader(
+    "Access-Control-Allow-Headers",
+    "Origin, X-Requested-With, Content-Type, Accept, Authorization"
+  );
+  res.setHeader("Access-Control-Allow-Methods", "GET, POST, PATCH, DELETE");
+  next();
+});
+
+app.use("/api/user", userRoute);
+
+//midleware sebagai defaul jika route tidak ditemukan
+app.use((req, res, next) => {
+  const error = new HttpError("Route Tidak ditemukan", 404);
+  throw error;
+});
+
+//midleware jika ada error yang dikirim dari model httperror
+app.use((error, req, res, next) => {
+  res
+    .status(error.code || 500)
+    .json({ message: error.message || "error tidak diketahui" });
+});
+
+const url = "mongodb://127.0.0.1:27017/unhasta";
 mongoose
-  .connect(url, {
-    useNewUrlParser: true,
-    useUnifiedTopology: true}
-  //  `mongodb+srv://${process.env.MONGGODB_USER_PASSWORD}@cluster0.enucz.mongodb.net/genbi?retryWrites=true&w=majority`
+  .connect(
+    url,
+    {
+      useNewUrlParser: true,
+      useUnifiedTopology: true,
+    }
+    //  `mongodb+srv://${process.env.MONGGODB_USER_PASSWORD}@cluster0.enucz.mongodb.net/genbi?retryWrites=true&w=majority`
   )
   .then((result) => {
     app.listen(process.env.PORT || 8080);

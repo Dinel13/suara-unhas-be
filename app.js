@@ -5,6 +5,8 @@ const mongoose = require("mongoose");
 const bodyParser = require("body-parser");
 
 const userRoute = require("./routes/user-route");
+const categoryRoutes = require("./routes/category");
+const tagRoutes = require("./routes/tag");
 const HttpError = require("./models/http-error");
 
 const app = express();
@@ -25,6 +27,8 @@ app.use((req, res, next) => {
 });
 
 app.use("/api/user", userRoute);
+app.use('/api', categoryRoutes);
+app.use('/api', tagRoutes);
 
 //midleware sebagai defaul jika route tidak ditemukan
 app.use((req, res, next) => {

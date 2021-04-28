@@ -2,6 +2,9 @@ const fs = require("fs");
 
 const formidable = require("formidable");
 const slugify = require("slugify");
+const stripHtml = require('string-strip-html');
+
+const stripHtmll = stripHtml.stripHtml
 
 const Blog = require("../models/blog");
 const Category = require("../models/category");
@@ -14,6 +17,7 @@ exports.create = (req, res, next) => {
   let form = new formidable.IncomingForm();
   form.keepExtensions = true;
   form.parse(req, (err, fields, files) => {
+    console.log(fields);
     if (err) {
       return next(new HttpError("Tidak dapat mengungah foto", 400));
     }
@@ -42,8 +46,8 @@ exports.create = (req, res, next) => {
     blog.excerpt = smartTrim(body, 320, " ", " ...");
     blog.slug = slugify(title).toLowerCase();
     blog.mtitle = `${title} | ${process.env.APP_NAME}`;
-    blog.mdesc = stripHtml(body.substring(0, 160));
-    blog.postedBy = req.user._id;
+    blog.mdesc = stripHtmll(body.substring(0, 160));
+    blog.postedBy = "dsadasd" // req.user._id;
     // categories and tags
     let arrayOfCategories = categories && categories.split(",");
     let arrayOfTags = tags && tags.split(",");
@@ -168,8 +172,8 @@ exports.remove = (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
   Blog.findOneAndRemove({ slug }).exec((err, data) => {
     if (err) {
-        return next(new HttpError(err, 400));
-   }
+      return next(new HttpError(err, 400));
+    }
     res.json({
       message: "Blog deleted successfully",
     });
@@ -181,7 +185,7 @@ exports.update = (req, res, next) => {
 
   Blog.findOne({ slug }).exec((err, oldBlog) => {
     if (err) {
-        return next(new HttpError(err, 400));
+      return next(new HttpError(err, 400));
     }
     let form = new formidable.IncomingForm();
     form.keepExtensions = true;
@@ -189,7 +193,7 @@ exports.update = (req, res, next) => {
     form.parse(req, (err, fields, files) => {
       if (err) {
         return next(new HttpError(err, 400));
-    }
+      }
 
       let slugBeforeMerge = oldBlog.slug;
       oldBlog = _.merge(oldBlog, fields);

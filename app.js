@@ -6,6 +6,7 @@ const bodyParser = require("body-parser");
 
 const userRoute = require("./routes/user-route");
 const categoryRoutes = require("./routes/category");
+const blogRoutes = require("./routes/blog");
 const tagRoutes = require("./routes/tag");
 const HttpError = require("./models/http-error");
 
@@ -28,6 +29,7 @@ app.use((req, res, next) => {
 
 app.use("/api/user", userRoute);
 app.use('/api', categoryRoutes);
+app.use('/api', blogRoutes);
 app.use('/api', tagRoutes);
 
 //midleware sebagai defaul jika route tidak ditemukan

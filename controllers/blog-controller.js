@@ -4,6 +4,8 @@ const formidable = require("formidable");
 const slugify = require("slugify");
 const stripHtml = require('string-strip-html');
 
+require('dotenv').config()
+
 const stripHtmll = stripHtml.stripHtml
 
 const Blog = require("../models/blog");

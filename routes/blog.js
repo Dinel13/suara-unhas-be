@@ -12,11 +12,10 @@ const {
     listRelated,
     listSearch,
     listByUser
-} = require('../controllers/blog');
+} = require('../controllers/blog-controller');
+const {authMiddleware} = require('../middleware/auth')
 
-const { requireSignin, adminMiddleware, authMiddleware, canUpdateDeleteBlog } = require('../middleware/auth');
-
-router.post('/blog',  create);
+router.post('/blog', authMiddleware, create);
 router.get('/blogs', list);
 router.post('/blogs-categories-tags', listAllBlogsCategoriesTags);
 router.get('/blog/:slug', read);

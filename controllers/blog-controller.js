@@ -6,8 +6,6 @@ const stripHtml = require('string-strip-html');
 
 require('dotenv').config()
 
-const stripHtmll = stripHtml.stripHtml
-
 const Blog = require("../models/blog");
 const Category = require("../models/category");
 const Tag = require("../models/tag");
@@ -47,9 +45,7 @@ exports.create = (req, res, next) => {
     blog.body = body;
     blog.excerpt = smartTrim(body, 320, " ", " ...");
     blog.slug = slugify(title).toLowerCase();
-    blog.mtitle = `${title} | ${process.env.APP_NAME}`;
-    blog.mdesc = stripHtmll(body.substring(0, 160));
-    blog.postedBy = "dsadasd" // req.user._id;
+    blog.postedBy = req.userData.userId;
     // categories and tags
     let arrayOfCategories = categories && categories.split(",");
     let arrayOfTags = tags && tags.split(",");

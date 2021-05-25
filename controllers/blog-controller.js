@@ -14,10 +14,11 @@ const { smartTrim } = require("../helpers/blog");
 const HttpError = require("../models/http-error");
 
 exports.create = (req, res, next) => {
+  console.log(req.body, "17");
   let form = new formidable.IncomingForm();
   form.keepExtensions = true;
   form.parse(req, (err, fields, files) => {
-    console.log(fields);
+    console.log(fields, "fields");
     if (err) {
       return next(new HttpError("Tidak dapat mengungah foto", 400));
     }

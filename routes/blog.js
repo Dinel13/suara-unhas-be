@@ -14,8 +14,14 @@ const {
     listByUser
 } = require('../controllers/blog-controller');
 const {authMiddleware} = require('../middleware/auth')
+const fileUpload = require('../middleware/file-upload')
 
-router.post('/blog', authMiddleware, create);
+
+
+
+router.use(authMiddleware)
+
+router.post('/blog', fileUpload.single('photo'),  create);
 router.get('/blogs', list);
 router.post('/blogs-categories-tags', listAllBlogsCategoriesTags);
 router.get('/blog/:slug', read);

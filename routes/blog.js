@@ -21,7 +21,7 @@ const fileUpload = require('../middleware/file-upload')
 
 router.use(authMiddleware)
 
-router.post('/blog', fileUpload.single('photo'),  create);
+router.post('/blog', fileUpload.single('photo'), create);
 router.get('/blogs', list);
 router.post('/blogs-categories-tags', listAllBlogsCategoriesTags);
 router.get('/blog/:slug', read);

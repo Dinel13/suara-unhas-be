@@ -14,11 +14,10 @@ const { smartTrim } = require("../helpers/blog");
 const HttpError = require("../models/http-error");
 
 exports.create = (req, res, next) => {
-  console.log(req.body, "17");
+  console.log(req.file, "17");
   let form = new formidable.IncomingForm();
   form.keepExtensions = true;
   form.parse(req, (err, fields, files) => {
-    console.log(fields, "fields");
     if (err) {
       return next(new HttpError("Tidak dapat mengungah foto", 400));
     }
@@ -47,17 +46,10 @@ exports.create = (req, res, next) => {
     blog.excerpt = smartTrim(body, 320, " ", " ...");
     blog.slug = slugify(title).toLowerCase();
     blog.postedBy = req.userData.userId;
+    blog.image = req.file.path;
     // categories and tags
     let arrayOfCategories = categories && categories.split(",");
     let arrayOfTags = tags && tags.split(",");
-
-    if (files.photo) {
-      if (files.photo.size > 10000000) {
-        return next(new HttpError("Maksimal ukuran foto 1 mb", 400));
-      }
-      blog.photo.data = fs.readFileSync(files.photo.path);
-      blog.photo.contentType = files.photo.type;
-    }
 
     blog.save((err, result) => {
       if (err) {

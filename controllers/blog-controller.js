@@ -1,10 +1,11 @@
 const fs = require("fs");
 
+const moongose = require("mongoose");
 const formidable = require("formidable");
 const slugify = require("slugify");
-const stripHtml = require('string-strip-html');
+const stripHtml = require("string-strip-html");
 
-require('dotenv').config()
+require("dotenv").config();
 
 const Blog = require("../models/blog");
 const Category = require("../models/category");
@@ -13,73 +14,114 @@ const User = require("../models/user");
 const { smartTrim } = require("../helpers/blog");
 const HttpError = require("../models/http-error");
 
-exports.create = (req, res, next) => {
-  console.log(req.file, "17");
-  let form = new formidable.IncomingForm();
-  form.keepExtensions = true;
-  form.parse(req, (err, fields, files) => {
-    if (err) {
-      return next(new HttpError("Tidak dapat mengungah foto", 400));
-    }
-
-    const { title, body, categories, tags } = fields;
-
-    if (!title || !title.length) {
-      return next(new HttpError("Judul harus ada", 400));
-    }
-
-    if (!body || body.length < 100) {
-      return next(new HttpError("Isi terlalu sedikit", 400));
-    }
-
-    if (!categories || categories.length === 0) {
-      return next(new HttpError("Minimal harus ada satu kategori", 400));
-    }
-
-    if (!tags || tags.length === 0) {
-      return next(new HttpError("Minimal harus ada satu tag", 400));
-    }
-
-    let blog = new Blog();
-    blog.title = title;
-    blog.body = body;
-    blog.excerpt = smartTrim(body, 320, " ", " ...");
-    blog.slug = slugify(title).toLowerCase();
-    blog.postedBy = req.userData.userId;
-    blog.image = req.file.path;
-    // categories and tags
-    let arrayOfCategories = categories && categories.split(",");
-    let arrayOfTags = tags && tags.split(",");
-
-    blog.save((err, result) => {
-      if (err) {
-        return next(new HttpError(err, 400));
-      }
-      // res.json(result);
-      Blog.findByIdAndUpdate(
-        result._id,
-        { $push: { categories: arrayOfCategories } },
-        { new: true }
-      ).exec((err, result) => {
-        if (err) {
-          return next(new HttpError(err, 400));
-        } else {
-          Blog.findByIdAndUpdate(
-            result._id,
-            { $push: { tags: arrayOfTags } },
-            { new: true }
-          ).exec((err, result) => {
-            if (err) {
-              return next(new HttpError(err, 400));
-            } else {
-              res.json(result);
-            }
-          });
-        }
-      });
-    });
+exports.create = async (req, res, next) => {
+  const { titleBlog, bodyBlog, categoryBlog, hastagsBlog } = req.body;
+   
+  const createBlog = new Blog({
+    title : titleBlog,
+    body : bodyBlog,
+    excerpt: smartTrim(bodyBlog, 320, " ", " ..."),
+    slug: slugify(titleBlog).toLowerCase(),
+    postedBy: req.userData.userId,
+    image: req.file.path,
+    category: categoryBlog,
+    hastags: hastagsBlog,
   });
-};
+
+  let user;
+  try {
+    user = await User.findById(req.userData.userId);
+  } catch (err) {
+    console.log(err);
+    return next(new HttpError("gagal membuat blog, tidak ada user", 500));
+  }
+
+  if (!user) {
+    return next(new HttpError("tidak dapat user ", 404));
+  }
+
+  try {
+    //can't use session because not set replica in mongodb
+    // const sess = await moongose.startSession();
+    // sess.startTransaction();
+    // await createBlog.save({ session: sess });
+    // user.blog.push(createBlog);
+    // await user.save({ session: sess });
+    // await sess.commitTransaction();
+    const savedBlog = await createBlog.save();
+    user.blog.push(createBlog);
+    await user.save();
+    res.status(201).send(savedBlog)
+  } catch (err) {
+    console.log(err);
+    const errr = new HttpError("tidak bisa buat blog", 500);
+    return next(errr);
+  }
+}
+
+  // let form = new formidable.IncomingForm();
+  // form.keepExtensions = true;
+  // form.parse(req, (err, fields, files) => {
+  //   const { title, body, categories, tags } = fields;
+  //   console.log(title, body, categories, tags);
+  //   if (!title || !title.length) {
+  //     return next(new HttpError("Judul harus ada", 400));
+  //   }
+
+  //   if (!body || body.length < 100) {
+  //     return next(new HttpError("Isi terlalu sedikit", 400));
+  //   }
+
+  //   if (!categories || categories.length === 0) {
+  //     return next(new HttpError("Minimal harus ada satu kategori", 400));
+  //   }
+
+  //   if (!tags || tags.length === 0) {
+  //     return next(new HttpError("Minimal harus ada satu tag", 400));
+  //   }
+
+  //   let blog = new Blog();
+  //   blog.title = title;
+  //   blog.body = body;
+  //   blog.excerpt = smartTrim(body, 320, " ", " ...");
+  //   blog.slug = slugify(title).toLowerCase();
+  //   blog.postedBy = req.userData.userId;
+  //   blog.image = req.file.path;
+  //   // categories and tags
+  //   let arrayOfCategories = categories && categories.split(",");
+  //   let arrayOfTags = tags && tags.split(",");
+
+  //   blog.save((err, result) => {
+  //     if (err) {
+  //       console.log(err);
+  //       return next(new HttpError(err, 400));
+  //     }
+  //     Blog.findByIdAndUpdate(
+  //       result._id,
+  //       { $push: { categories: arrayOfCategories } },
+  //       { new: true }
+  //     ).exec((err, result) => {
+  //       if (err) {
+  //         console.log(err);
+  //         return next(new HttpError(err, 400));
+  //       } else {
+  //         Blog.findByIdAndUpdate(
+  //           result._id,
+  //           { $push: { tags: arrayOfTags } },
+  //           { new: true }
+  //         ).exec((err, result) => {
+  //           if (err) {
+  //             console.log(err);
+  //             return next(new HttpError(err, 400));
+  //           } else {
+  //             res.status(201).json(result);
+  //           }
+  //         });
+  //       }
+  //     });
+  //   });
+  // });
+
 
 // list, listAllBlogsCategoriesTags, read, remove, update
 

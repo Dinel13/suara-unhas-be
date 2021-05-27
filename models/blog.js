@@ -30,12 +30,16 @@ const blogSchema = new mongoose.Schema(
       type: String,
       max: 1000,
     },
-    categories: [{ type: ObjectId, ref: "Category", required: true }],
-    tags: [{ type: ObjectId, ref: "Tag", required: true }],
+    category: {
+      type : String,
+      required : true
+    },
+    hastags: [{ type: String, required: true }],
     postedBy: {
       type: ObjectId,
       ref: "User",
     },
+    comment : [{type : Object, required : false }]
   },
   { timestamps: true }
 );

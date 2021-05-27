@@ -51,77 +51,13 @@ exports.create = async (req, res, next) => {
     const savedBlog = await createBlog.save();
     user.blog.push(createBlog);
     await user.save();
-    res.status(201).send(savedBlog)
+    res.status(201).send({slug : savedBlog.slug}) 
   } catch (err) {
     console.log(err);
     const errr = new HttpError("tidak bisa buat blog", 500);
     return next(errr);
   }
-}
-
-  // let form = new formidable.IncomingForm();
-  // form.keepExtensions = true;
-  // form.parse(req, (err, fields, files) => {
-  //   const { title, body, categories, tags } = fields;
-  //   console.log(title, body, categories, tags);
-  //   if (!title || !title.length) {
-  //     return next(new HttpError("Judul harus ada", 400));
-  //   }
-
-  //   if (!body || body.length < 100) {
-  //     return next(new HttpError("Isi terlalu sedikit", 400));
-  //   }
-
-  //   if (!categories || categories.length === 0) {
-  //     return next(new HttpError("Minimal harus ada satu kategori", 400));
-  //   }
-
-  //   if (!tags || tags.length === 0) {
-  //     return next(new HttpError("Minimal harus ada satu tag", 400));
-  //   }
-
-  //   let blog = new Blog();
-  //   blog.title = title;
-  //   blog.body = body;
-  //   blog.excerpt = smartTrim(body, 320, " ", " ...");
-  //   blog.slug = slugify(title).toLowerCase();
-  //   blog.postedBy = req.userData.userId;
-  //   blog.image = req.file.path;
-  //   // categories and tags
-  //   let arrayOfCategories = categories && categories.split(",");
-  //   let arrayOfTags = tags && tags.split(",");
-
-  //   blog.save((err, result) => {
-  //     if (err) {
-  //       console.log(err);
-  //       return next(new HttpError(err, 400));
-  //     }
-  //     Blog.findByIdAndUpdate(
-  //       result._id,
-  //       { $push: { categories: arrayOfCategories } },
-  //       { new: true }
-  //     ).exec((err, result) => {
-  //       if (err) {
-  //         console.log(err);
-  //         return next(new HttpError(err, 400));
-  //       } else {
-  //         Blog.findByIdAndUpdate(
-  //           result._id,
-  //           { $push: { tags: arrayOfTags } },
-  //           { new: true }
-  //         ).exec((err, result) => {
-  //           if (err) {
-  //             console.log(err);
-  //             return next(new HttpError(err, 400));
-  //           } else {
-  //             res.status(201).json(result);
-  //           }
-  //         });
-  //       }
-  //     });
-  //   });
-  // });
-
+} 
 
 // list, listAllBlogsCategoriesTags, read, remove, update
 
@@ -141,58 +77,10 @@ exports.list = (req, res, next) => {
     });
 };
 
-exports.listAllBlogsCategoriesTags = (req, res, next) => {
-  let limit = req.body.limit ? parseInt(req.body.limit) : 10;
-  let skip = req.body.skip ? parseInt(req.body.skip) : 0;
-
-  let blogs;
-  let categories;
-  let tags;
-
-  Blog.find({})
-    .populate("categories", "_id name slug")
-    .populate("tags", "_id name slug")
-    .populate("postedBy", "_id name username profile")
-    .sort({ createdAt: -1 })
-    .skip(skip)
-    .limit(limit)
-    .select(
-      "_id title slug excerpt categories tags postedBy createdAt updatedAt"
-    )
-    .exec((err, data) => {
-      if (err) {
-        return next(new HttpError(err, 400));
-      }
-      blogs = data; // blogs
-      // get all categories
-      Category.find({}).exec((err, c) => {
-        if (err) {
-          return next(new HttpError(err, 400));
-        }
-        categories = c; // categories
-        // get all tags
-        Tag.find({}).exec((err, t) => {
-          if (err) {
-            return next(new HttpError(err, 400));
-          }
-          tags = t;
-          // return all blogs categories tags
-          res.json({ blogs, categories, tags, size: blogs.length });
-        });
-      });
-    });
-};
-
 exports.read = (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
+  console.log(slug);
   Blog.findOne({ slug })
-    // .select("-photo")
-    .populate("categories", "_id name slug")
-    .populate("tags", "_id name slug")
-    .populate("postedBy", "_id name username")
-    .select(
-      "_id title body slug mtitle mdesc categories tags postedBy createdAt updatedAt"
-    )
     .exec((err, data) => {
       if (err) {
         return next(new HttpError(err, 400));

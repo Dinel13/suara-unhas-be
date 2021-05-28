@@ -8,24 +8,22 @@ const stripHtml = require("string-strip-html");
 require("dotenv").config();
 
 const Blog = require("../models/blog");
-const Category = require("../models/category");
-const Tag = require("../models/tag");
 const User = require("../models/user");
 const { smartTrim } = require("../helpers/blog");
 const HttpError = require("../models/http-error");
 
 exports.create = async (req, res, next) => {
   const { titleBlog, bodyBlog, categoryBlog, hastagsBlog } = req.body;
-   
+  const arrayHastags = hastagsBlog.split(",");
   const createBlog = new Blog({
-    title : titleBlog,
-    body : bodyBlog,
+    title: titleBlog,
+    body: bodyBlog,
     excerpt: smartTrim(bodyBlog, 320, " ", " ..."),
     slug: slugify(titleBlog).toLowerCase(),
     postedBy: req.userData.userId,
     image: req.file.path,
     category: categoryBlog,
-    hastags: hastagsBlog,
+    hastags: arrayHastags,
   });
 
   let user;
@@ -51,13 +49,13 @@ exports.create = async (req, res, next) => {
     const savedBlog = await createBlog.save();
     user.blog.push(createBlog);
     await user.save();
-    res.status(201).send({slug : savedBlog.slug}) 
+    res.status(201).send({ slug: savedBlog.slug });
   } catch (err) {
     console.log(err);
     const errr = new HttpError("tidak bisa buat blog", 500);
     return next(errr);
   }
-} 
+};
 
 // list, listAllBlogsCategoriesTags, read, remove, update
 
@@ -79,14 +77,12 @@ exports.list = (req, res, next) => {
 
 exports.read = (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
-  console.log(slug);
-  Blog.findOne({ slug })
-    .exec((err, data) => {
-      if (err) {
-        return next(new HttpError(err, 400));
-      }
-      res.json(data);
-    });
+  Blog.findOne({ slug }).exec((err, data) => {
+    if (err) {
+      return next(new HttpError(err, 400));
+    }
+    res.json(data);
+  });
 };
 
 exports.remove = (req, res, next) => {

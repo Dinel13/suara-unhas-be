@@ -153,21 +153,21 @@ exports.update = (req, res, next) => {
 };
 
 exports.comment = async (req, res, next) => {
-  const userId = req.userData.userId;
+  const {userId, name} = req.userData;
+  const { comment } = req.body; 
   const slug = req.params.slug.toLowerCase();
-  const { comment } = req.body;
-  console.log(req.body);
-  console.log(comment);
+  const commentData = {userId, name, comment}
 
   try {
     const blog = await Blog.findOne({ slug }).exec();
-    blog.comment = [...blog.comment, comment];
+    blog.comment = [...blog.comment, commentData];
     const newBlog = await blog.save();
     console.log(newBlog);
+    res.status(201).json({comment : newBlog.comment})
     // return res.send(newBlog);
   } catch (error) {
     return res.status(400).json({
-      error: err,
+      error: error,
     });
   }
 };

@@ -4,11 +4,10 @@ const router = express.Router();
 const {
     create,
     list,
-    listAllBlogsCategoriesTags,
     read,
     remove,
     update,
-    photo,
+    comment,
     listRelated,
     listSearch,
     listByUser
@@ -26,7 +25,7 @@ router.use(authMiddleware)
 router.post('/blog', fileUpload.single('imageBlog'), create);
 router.delete('/blog/:slug', remove);
 router.put('/blog/:slug', update);
-router.get('/blog/photo/:slug', photo);
+router.post('/blog/:slug/comment', comment);
 router.post('/blogs/related', listRelated);
 router.get('/blogs/search', listSearch);
 

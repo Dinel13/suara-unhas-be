@@ -18,7 +18,7 @@ exports.create = async (req, res, next) => {
   const createBlog = new Blog({
     title: titleBlog,
     body: bodyBlog,
-    excerpt: smartTrim(bodyBlog, 320, " ", " ..."),
+    excerpt: smartTrim(bodyBlog, 140, " ", " ..."),
     slug: slugify(titleBlog).toLowerCase(),
     postedBy: req.userData.userId,
     image: req.file.path,
@@ -61,11 +61,9 @@ exports.create = async (req, res, next) => {
 
 exports.list = (req, res, next) => {
   Blog.find({})
-    .populate("categories", "_id name slug")
-    .populate("tags", "_id name slug")
     .populate("postedBy", "_id name username")
     .select(
-      "_id title slug excerpt categories tags postedBy createdAt updatedAt"
+      "_id title slug excerpt category image hastags postedBy createdAt updatedAt"
     )
     .exec((err, data) => {
       if (err) {
@@ -154,19 +152,24 @@ exports.update = (req, res, next) => {
   });
 };
 
-exports.photo = (req, res) => {
+exports.comment = async (req, res, next) => {
+  const userId = req.userData.userId;
   const slug = req.params.slug.toLowerCase();
-  Blog.findOne({ slug })
-    .select("photo")
-    .exec((err, blog) => {
-      if (err || !blog) {
-        return res.status(400).json({
-          error: errorHandler(err),
-        });
-      }
-      res.set("Content-Type", blog.photo.contentType);
-      return res.send(blog.photo.data);
+  const { comment } = req.body;
+  console.log(req.body);
+  console.log(comment);
+
+  try {
+    const blog = await Blog.findOne({ slug }).exec();
+    blog.comment = [...blog.comment, comment];
+    const newBlog = await blog.save();
+    console.log(newBlog);
+    // return res.send(newBlog);
+  } catch (error) {
+    return res.status(400).json({
+      error: err,
     });
+  }
 };
 
 exports.listRelated = (req, res) => {

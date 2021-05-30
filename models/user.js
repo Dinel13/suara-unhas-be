@@ -15,7 +15,18 @@ const userSchema = new Schema({
     type: String,
     required: true,
   },
-  blog: [{type: mongoose.Types.ObjectId, required : true , ref : 'blog'}]
-
+  blog: [{ type: mongoose.Types.ObjectId, required: true, ref: "blog" }],
+  fakultas: {
+    type: String,
+    require: false,
+  },
+  image: {
+    type: String,
+    require: false,
+  },
+  motto: {
+    type: String,
+    require: false,
+  },
 });
 module.exports = mongoose.model("User", userSchema);

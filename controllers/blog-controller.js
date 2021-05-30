@@ -174,6 +174,16 @@ exports.comment = async (req, res, next) => {
 
 exports.populer = async (req, res, next) => {
   try {
+    const blog = await Blog.find().sort({ comment: -1 }).limit(3);
+    res.status(200).json({ blog: blog });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("gagal meload populer blog", 500));
+  }
+};
+
+exports.newest = async (req, res, next) => {
+  try {
     const blog = await Blog.find().sort({ createdAt: -1 }).limit(3);
     res.status(200).json({ blog: blog });
   } catch (error) {

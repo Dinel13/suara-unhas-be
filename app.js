@@ -30,7 +30,7 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/api/user", userRoute);
+app.use("/api", userRoute);
 app.use('/api', categoryRoutes);
 app.use('/api', tagRoutes);
 app.use('/api', blogRoutes);

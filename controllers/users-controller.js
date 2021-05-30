@@ -50,7 +50,7 @@ const signup = async (req, res, next) => {
   let token;
   try {
     token = jwt.sign(
-      { userId: createuser.id, email: createuser.email, name : createuser.name },
+      { userId: createuser.id, email: createuser.email, name: createuser.name },
       process.env.JWT_KEY,
       { expiresIn: "10d" }
     );
@@ -100,7 +100,11 @@ const login = async (req, res, next) => {
   let token;
   try {
     token = jwt.sign(
-      { userId: existingUser.id, email: existingUser.email, name : existingUser.name },
+      {
+        userId: existingUser.id,
+        email: existingUser.email,
+        name: existingUser.name,
+      },
       process.env.JWT_KEY,
       { expiresIn: "10d" }
     );
@@ -194,6 +198,17 @@ const resetPassword = (req, res) => {
         });
       }
     );
+  }
+};
+
+exports.populer = async (req, res, next) => {
+  try {
+    const data = await User.find().sort({ blog: -1 }).limit(3);
+    console.log(data);
+    res.status(200).json({ user: data });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("Gagal mendapatkan penulis populer", 500));
   }
 };
 

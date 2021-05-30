@@ -10,7 +10,8 @@ const {
     comment,
     listRelated,
     listSearch,
-    listByUser
+    listByUser,
+    populer
 } = require('../controllers/blog-controller');
 const {authMiddleware} = require('../middleware/auth')
 const fileUpload = require('../middleware/file-upload')
@@ -28,6 +29,7 @@ router.put('/blog/:slug', update);
 router.post('/blog/:slug/comment', comment);
 router.post('/blogs/related', listRelated);
 router.get('/blogs/search', listSearch);
+router.get('/blogs/populer', populer);
 
 // auth user blog crud
 router.post('/user/blog',  create);

@@ -153,22 +153,32 @@ exports.update = (req, res, next) => {
 };
 
 exports.comment = async (req, res, next) => {
-  const {userId, name} = req.userData;
-  const { comment } = req.body; 
+  const { userId, name } = req.userData;
+  const { comment } = req.body;
   const slug = req.params.slug.toLowerCase();
-  const commentData = {userId, name, comment}
+  const commentData = { userId, name, comment };
 
   try {
     const blog = await Blog.findOne({ slug }).exec();
     blog.comment = [...blog.comment, commentData];
     const newBlog = await blog.save();
     console.log(newBlog);
-    res.status(201).json({comment : newBlog.comment})
+    res.status(201).json({ comment: newBlog.comment });
     // return res.send(newBlog);
   } catch (error) {
     return res.status(400).json({
       error: error,
     });
+  }
+};
+
+exports.populer = async (req, res, next) => {
+  try {
+    const blog = await Blog.find().sort({ createdAt: -1 }).limit(3);
+    res.status(200).json({ blog: blog });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("gagal meload populer blog", 500));
   }
 };
 

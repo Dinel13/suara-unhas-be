@@ -52,7 +52,7 @@ const signup = async (req, res, next) => {
     token = jwt.sign(
       { userId: createuser.id, email: createuser.email, name : createuser.name },
       process.env.JWT_KEY,
-      { expiresIn: "1h" }
+      { expiresIn: "10d" }
     );
   } catch (error) {
     return next(new HttpError("Gagal mendaftar, coba lagi nanti", 500));
@@ -102,7 +102,7 @@ const login = async (req, res, next) => {
     token = jwt.sign(
       { userId: existingUser.id, email: existingUser.email, name : existingUser.name },
       process.env.JWT_KEY,
-      { expiresIn: "1h" }
+      { expiresIn: "10d" }
     );
   } catch (err) {
     const error = new HttpError("Tidak bisa masuk, coba lagi nanti.", 500);

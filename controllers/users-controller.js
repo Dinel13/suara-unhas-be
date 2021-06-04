@@ -13,8 +13,6 @@ const signup = async (req, res, next) => {
     return next(new HttpError("Semua field harus diisi", 422));
   }
 
-  console.log();
-
   email = email.toLowerCase();
   const emailToSearch = /\bunhas.ac.id\b/i;
 
@@ -85,8 +83,13 @@ const signup = async (req, res, next) => {
 };
 
 const login = async (req, res, next) => {
-  const { email, password } = req.body;
-  console.log(email, password);
+  let { email, password } = req.body;
+
+  if (!email || !password) {
+    return next(new HttpError("Semua field harus diisi", 422));
+  }
+
+  email = email.toLowerCase();
   let existingUser;
 
   try {
@@ -138,88 +141,179 @@ const login = async (req, res, next) => {
     userId: existingUser.id,
     name: existingUser.name,
     token: token,
+    publicId: createuser.publicId,
+    nickName: createuser.nickName,
   });
 };
 
-const forgotPassword = (req, res) => {
-  const { email } = req.body;
+const forgotPassword = async (req, res, next) => {
+  let { email } = req.body;
 
-  User.findOne({ email }, (err, user) => {
-    if (err || !user) {
-      return res.status(401).json({
-        error: "User with that email does not exist",
-      });
-    }
+  if (!email) {
+    return next(new HttpError("Email field harus diisi", 422));
+  }
 
-    const token = jwt.sign({ _id: user._id }, process.env.JWT_RESET_PASSWORD, {
-      expiresIn: "1h",
-    });
+  email = email.toLowerCase();
+  let user;
+  try {
+    user = await User.find({ email });
+  } catch (err) {
+    const error = new HttpError("Gagal menemukan email, coba lagi nanti.", 500);
+    return next(error);
+  }
 
-    // email
-    const emailData = {
-      from: process.env.EMAIL_FROM,
-      to: email,
-      subject: `Password reset link`,
-      html: `
-          <p>Kamu telah meminta untuk mereset password</p>
-          <p>KLik tautan ini <a href="http://localhost:3000/reset/${token}">link</a> untuk membuat password baru.</p>
-      `,
-    };
-    // populating the db > user > resetPasswordLink
-    return user.updateOne({ resetPasswordLink: token }, (err, success) => {
-      if (err) {
-        return res.json({ error: errorHandler(err) });
-      } else {
-        sgMail.send(emailData).then((sent) => {
-          return res.json({
-            message: `Email has been sent to ${email}. Follow the instructions to reset your password. Link expires in 10min.`,
-          });
-        });
-      }
-    });
-  });
-};
-
-const resetPassword = (req, res) => {
-  const { resetPasswordLink, newPassword } = req.body;
-
-  if (resetPasswordLink) {
-    jwt.verify(
-      resetPasswordLink,
-      process.env.JWT_RESET_PASSWORD,
-      function (err, decoded) {
-        if (err) {
-          return res.status(401).json({
-            error: "Expired link. Try again",
-          });
-        }
-        User.findOne({ resetPasswordLink }, (err, user) => {
-          if (err || !user) {
-            return res.status(401).json({
-              error: "Something went wrong. Try later",
-            });
-          }
-          const updatedFields = {
-            password: newPassword,
-            resetPasswordLink: "",
-          };
-
-          user = _.extend(user, updatedFields);
-
-          user.save((err, result) => {
-            if (err) {
-              return res.status(400).json({
-                error: errorHandler(err),
-              });
-            }
-            res.json({
-              message: `Great! Now you can login with your new password`,
-            });
-          });
-        });
-      }
+  if (!user) {
+    return next(
+      new HttpError("Email tidak ditemukan, silahkan mendaftar.", 404)
     );
   }
+
+  let token;
+  try {
+    token = jwt.sign({ id: user.id }, process.env.JWT_RESET_PASSWORD, {
+      expiresIn: "10m",
+    });
+  } catch (error) {
+    return next(
+      new HttpError("Tidak bisa membuat token, coba lagi nanti.", 500)
+    );
+  }
+
+  const transporter = nodemailer.createTransport({
+    service: "gmail",
+    host: "smtp.gmail.com",
+    auth: {
+      type: "OAuth2",
+      user: process.env.MAIL_USERNAME,
+      pass: process.env.MAIL_PASSWORD,
+      clientId: process.env.OAUTH_CLIENTID,
+      clientSecret: process.env.OAUTH_CLIENT_SECRET,
+      refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+    },
+  });
+
+  const mailOptions = {
+    from: "fadullah2021@gmail.com",
+    to: email,
+    subject: "Suara Unhas || Password reset",
+    html: `
+    <h2>Hi, ${user.name}</h2>
+    <h4>Kamu telah meminta untuk mereset password</h4>
+    <p>Klik tombol dibawah untuk membuat password baru.</p>
+    <a
+      href="http://localhost:3000/reset/${token}"
+      style="
+        padding: 8px 10px;
+        text-decoration: none;
+        color: black;
+        font-weight: 700;
+        background-color: #278a27;
+        border-radius: 8px;
+      "
+    >
+      reset password
+    </a>
+    <p>jika link diatas tidak berfunsi, maka gunakan link dibawah ini</p>
+    
+    <a href="http://localhost:3000/reset/${token}"
+      >http://localhost:3000/reset/${token}</a
+    >
+    <br />
+    <h4>Terima kasih</h4>
+    <p>Team Manut || B21-CAP1099</p>p>
+    `,
+  };
+  transporter.sendMail(mailOptions, function (error, info) {
+    if (error) {
+      console.log(error);
+      return next(
+        new HttpError("Tidak bisa mengirim email, coba lagi nanti.", 500)
+      );
+    } else {
+      return res.status(201).json({
+        message: `Email untuk mereset telah dikirim ke alamat ${email}. Link akan kadarluarsa dalam 10 menit.`,
+        // token: token,
+      });
+    }
+  });
+};
+
+const resetPassword = async (req, res, next) => {
+  const token = req.params.token;
+  const { newPassword, newPasswordConf } = req.body;
+
+  if (!token) {
+    return next(
+      new HttpError("Token tidak tersedia, pastikan link anda betul", 404)
+    );
+  }
+
+  if (!newPassword || !newPasswordConf) {
+    return next(
+      new HttpError("Gagal mereset password, pastikan semua field terisi", 422)
+    );
+  }
+
+  if (newPassword !== newPasswordConf) {
+    return next(
+      new HttpError("Passoword harus sama dengan konfirmasi password", 422)
+    );
+  }
+
+  let decodedToken;
+  try {
+    decodedToken = await jwt.verify(
+      token.toString(),
+      process.env.JWT_RESET_PASSWORD
+    );
+  } catch (error) {
+    return next(
+      new HttpError(
+        "Tidak bisa memverifikasi token, token hanya berumur 10 menit setelah digenerate.",
+        500
+      )
+    );
+  }
+
+  if (!decodedToken) {
+    return next(
+      new HttpError(
+        "Token sudah expire, token hanya berumur 10 menit setelah digenerate.",
+        404
+      )
+    );
+  }
+
+  let user;
+  try {
+    user = await User.findById(decodedToken.id);
+  } catch (error) {
+    return next(new HttpError("Tidak bisa menemukan user.", 404));
+  }
+
+  let HasPassword;
+  try {
+    HasPassword = await bcrypt.hash(newPassword, 12);
+  } catch (err) {
+    return next(
+      new HttpError("Gagal mengengrisi password baru, coba lagi nati", 500)
+    );
+  }
+
+  try {
+    user.password = HasPassword;
+    userNew = await user.save();
+  } catch (error) {
+    return next(
+      new HttpError(
+        "Tidak bisa mengupdate password baru, coba lagi nanti.",
+        500
+      )
+    );
+  }
+  res.status(201).json({
+    message: "berhasil mereset password",
+  });
 };
 
 exports.populer = async (req, res, next) => {

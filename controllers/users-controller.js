@@ -204,11 +204,22 @@ const resetPassword = (req, res) => {
 exports.populer = async (req, res, next) => {
   try {
     const data = await User.find().sort({ blog: -1 }).limit(3);
-    console.log(data);
     res.status(200).json({ user: data });
   } catch (error) {
     console.log(error);
     return next(new HttpError("Gagal mendapatkan penulis populer", 500));
+  }
+};
+
+exports.getUserData = async (req, res, next) => {
+  const id = req.params.id
+  console.log(id);
+  try {
+    const data = await User.findById(id).exec();
+    res.status(200).json({ user: data });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("gagal mendapatkan data penulis", 500));
   }
 };
 

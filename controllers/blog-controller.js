@@ -63,7 +63,7 @@ exports.list = (req, res, next) => {
   Blog.find({})
     .populate("postedBy", "_id name username")
     .select(
-      "_id title slug excerpt category image hastags postedBy createdAt updatedAt"
+      "_id title slug excerpt category comment image hastags postedBy createdAt updatedAt"
     )
     .exec((err, data) => {
       if (err) {

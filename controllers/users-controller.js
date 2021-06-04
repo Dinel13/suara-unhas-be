@@ -13,7 +13,7 @@ const signup = async (req, res, next) => {
     return next(new HttpError("Semua field harus diisi", 422));
   }
 
-  console.log(name.split(" ")[0] || name);
+  console.log();
 
   email = email.toLowerCase();
   const emailToSearch = /\bunhas.ac.id\b/i;
@@ -41,10 +41,16 @@ const signup = async (req, res, next) => {
     return next(error);
   }
 
+  const nickName = name.split(" ")[0] || name;
+  const publicId =
+    email.split("@")[0] + "-" + nickName + "-" + Date.now().toString(36);
+
   const createuser = new User({
+    publicId,
     name,
     email,
     password: HasPassword,
+    nickName,
   });
 
   let result;
@@ -57,7 +63,11 @@ const signup = async (req, res, next) => {
   let token;
   try {
     token = jwt.sign(
-      { userId: createuser.id, email: createuser.email, name: createuser.name },
+      {
+        userId: createuser.id,
+        email: createuser.email,
+        name: createuser.name,
+      },
       process.env.JWT_KEY,
       { expiresIn: "10d" }
     );
@@ -65,9 +75,13 @@ const signup = async (req, res, next) => {
     return next(new HttpError("Gagal mendaftar, coba lagi nanti", 500));
   }
 
-  res
-    .status(201)
-    .json({ userId: createuser.id, name: createuser.name, token: token });
+  res.status(201).json({
+    userId: createuser.id,
+    publicId: createuser.publicId,
+    name: createuser.name,
+    nickName: createuser.nickName,
+    token: token,
+  });
 };
 
 const login = async (req, res, next) => {

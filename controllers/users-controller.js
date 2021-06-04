@@ -1,4 +1,3 @@
-const { validationResult } = require("express-validator");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -8,12 +7,20 @@ const User = require("../models/user");
 const HttpError = require("../models/http-error");
 
 const signup = async (req, res, next) => {
-  const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    throw new HttpError("periksa data anda", 422);
+  let { name, email, password } = req.body;
+
+  if (!name || !email || !password) {
+    return next(new HttpError("Semua field harus diisi", 422));
   }
-  const { name, email, password } = req.body;
-  console.log(name, email, password);
+
+  console.log(name.split(" ")[0] || name);
+
+  email = email.toLowerCase();
+  const emailToSearch = /\bunhas.ac.id\b/i;
+
+  if (!emailToSearch.test(email)) {
+    return next(new HttpError("Harus mengunakan email domain unhas", 422));
+  }
 
   let existingUser;
   try {
@@ -212,7 +219,7 @@ exports.populer = async (req, res, next) => {
 };
 
 exports.getUserData = async (req, res, next) => {
-  const id = req.params.id
+  const id = req.params.id;
   console.log(id);
   try {
     const data = await User.findById(id).exec();

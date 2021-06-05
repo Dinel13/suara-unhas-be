@@ -153,10 +153,12 @@ const forgotPassword = async (req, res, next) => {
     return next(new HttpError("Email field harus diisi", 422));
   }
 
+  console.log(email);
   email = email.toLowerCase();
+
   let user;
   try {
-    user = await User.find({ email });
+    user = await User.findOne({ email });
   } catch (err) {
     const error = new HttpError("Gagal menemukan email, coba lagi nanti.", 500);
     return next(error);
@@ -170,14 +172,16 @@ const forgotPassword = async (req, res, next) => {
 
   let token;
   try {
-    token = jwt.sign({ id: user.id }, process.env.JWT_RESET_PASSWORD, {
-      expiresIn: "10m",
+    token = await jwt.sign({ id: user.id }, process.env.JWT_RESET_PASSWORD, {
+      expiresIn: "10h",
     });
   } catch (error) {
     return next(
       new HttpError("Tidak bisa membuat token, coba lagi nanti.", 500)
     );
   }
+  // test without email
+  // res.status(200).json({ ds: { token } });
 
   const transporter = nodemailer.createTransport({
     service: "gmail",
@@ -214,7 +218,7 @@ const forgotPassword = async (req, res, next) => {
       reset password
     </a>
     <p>jika link diatas tidak berfunsi, maka gunakan link dibawah ini</p>
-    
+
     <a href="http://localhost:3000/reset/${token}"
       >http://localhost:3000/reset/${token}</a
     >
@@ -316,7 +320,42 @@ const resetPassword = async (req, res, next) => {
   });
 };
 
-exports.populer = async (req, res, next) => {
+const updateUser = async (req, res, next) => {
+  const id = req.params.id;
+  const { name, nickName, bio, image, fakultas, motto } = req.body;
+
+  let upUser;
+  try {
+    upUser = await User.findById(id);
+  } catch (error) {
+    return next(new HttpError("Tidak bisa mencari user", 500));
+  }
+
+  if (!upUser) {
+    return next(new HttpError("Tidak bisa menemukan user", 404));
+  }
+
+  if (upUser.id.toString() !== req.userData.userId) {
+    return next(new HttpError("Kamu tidak diijinkan untuk mengedit", 401));
+  }
+
+  upUser.name = name;
+  upUser.nickName = nickName;
+  upUser.bio = bio;
+  upUser.image = req.file.path;
+  upUser.fakultas = fakultas;
+  upUser.motto = motto;
+
+  try {
+    await user.save();
+  } catch (err) {
+    return next(new HttpError("tidak dapat menyimpan", 500));
+  }
+
+  res.status(200).json({ user: upUser.toObject({ getters: true }) });
+};
+
+const populer = async (req, res, next) => {
   try {
     const data = await User.find().sort({ blog: -1 }).limit(3);
     res.status(200).json({ user: data });
@@ -326,7 +365,7 @@ exports.populer = async (req, res, next) => {
   }
 };
 
-exports.getUserData = async (req, res, next) => {
+const getUserData = async (req, res, next) => {
   const id = req.params.id;
   console.log(id);
   try {
@@ -342,3 +381,6 @@ exports.login = login;
 exports.signup = signup;
 exports.forgotPassword = forgotPassword;
 exports.resetPassword = resetPassword;
+exports.populer = populer;
+exports.getUserData = getUserData;
+exports.updateUser = updateUser;

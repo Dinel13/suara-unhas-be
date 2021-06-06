@@ -174,7 +174,7 @@ exports.comment = async (req, res, next) => {
 
 exports.populer = async (req, res, next) => {
   try {
-    const blog = await Blog.find().sort({ comment: -1 }).limit(3);
+    const blog = await Blog.find().sort({ comment: -1 }).limit(6);
     res.status(200).json({ blog: blog });
   } catch (error) {
     console.log(error);
@@ -184,7 +184,7 @@ exports.populer = async (req, res, next) => {
 
 exports.newest = async (req, res, next) => {
   try {
-    const blog = await Blog.find().sort({ createdAt: -1 }).limit(3);
+    const blog = await Blog.find().sort({ createdAt: -1 }).limit(6);
     res.status(200).json({ blog: blog });
   } catch (error) {
     console.log(error);

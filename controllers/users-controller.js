@@ -100,7 +100,10 @@ const login = async (req, res, next) => {
   }
 
   if (!existingUser) {
-    const error = new HttpError("Credentials tidak cocok.", 401);
+    const error = new HttpError(
+      "Email tidak ditemukan, silahkan mendaftar dulu.",
+      401
+    );
     return next(error);
   }
 
@@ -141,8 +144,8 @@ const login = async (req, res, next) => {
     userId: existingUser.id,
     name: existingUser.name,
     token: token,
-    publicId: createuser.publicId,
-    nickName: createuser.nickName,
+    publicId: existingUser.publicId,
+    nickName: existingUser.nickName,
   });
 };
 
@@ -357,7 +360,7 @@ const updateUser = async (req, res, next) => {
 
 const populer = async (req, res, next) => {
   try {
-    const data = await User.find().sort({ blog: -1 }).limit(3);
+    const data = await User.find().sort({ blog: -1 }).limit(6);
     res.status(200).json({ user: data });
   } catch (error) {
     console.log(error);

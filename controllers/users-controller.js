@@ -370,9 +370,8 @@ const populer = async (req, res, next) => {
 
 const getUserData = async (req, res, next) => {
   const id = req.params.id;
-  console.log(id);
   try {
-    const data = await User.findById(id).exec();
+    const data = await User.findOne({ publicId: id }).exec();
     res.status(200).json({ user: data });
   } catch (error) {
     console.log(error);

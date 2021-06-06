@@ -11,6 +11,7 @@ const Blog = require("../models/blog");
 const User = require("../models/user");
 const { smartTrim } = require("../helpers/blog");
 const HttpError = require("../models/http-error");
+const { populate } = require("../models/user");
 
 exports.create = async (req, res, next) => {
   const { titleBlog, bodyBlog, categoryBlog, hastagsBlog } = req.body;
@@ -24,7 +25,8 @@ exports.create = async (req, res, next) => {
     title: titleBlog,
     body: bodyBlog,
     excerpt: smartTrim(bodyBlog, 140, " ", " ..."),
-    slug: slugify(titleBlog).toLowerCase(),
+    slug:
+      slugify(titleBlog).toLowerCase() + "-" + req.userData.name.split(" ")[0],
     postedBy: req.userData.userId,
     image,
     category: categoryBlog,
@@ -66,7 +68,7 @@ exports.create = async (req, res, next) => {
 
 exports.list = (req, res, next) => {
   Blog.find({})
-    .populate("postedBy", "_id name username")
+    .populate("postedBy", "_id name")
     .select(
       "_id title slug excerpt category comment image hastags postedBy createdAt updatedAt"
     )
@@ -80,12 +82,17 @@ exports.list = (req, res, next) => {
 
 exports.read = (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
-  Blog.findOne({ slug }).exec((err, data) => {
-    if (err) {
-      return next(new HttpError(err, 400));
-    }
-    res.json(data);
-  });
+  Blog.findOne({ slug })
+    .populate("postedBy", "publicId nickName")
+    .select(
+      "_id title slug excerpt category comment image hastags postedBy createdAt"
+    )
+    .exec((err, data) => {
+      if (err) {
+        return next(new HttpError(err, 400));
+      }
+      res.json(data);
+    });
 };
 
 exports.remove = (req, res, next) => {
@@ -158,22 +165,33 @@ exports.update = (req, res, next) => {
 };
 
 exports.comment = async (req, res, next) => {
-  const { userId, name } = req.userData;
-  const { comment } = req.body;
-  const slug = req.params.slug.toLowerCase();
-  const commentData = { userId, name, comment };
+  const { userId } = req.userData;
+  const { comment, blogId } = req.body;
+  let user;
+  try {
+    user = await User.findById(userId).exec();
+  } catch (error) {
+    return next(new HttpError("User tidak dicari, coba lagi nanti", 500));
+  }
+  if (!user) {
+    return next(new HttpError("User tidak ditemukan, daftar dulu", 404));
+  }
+  const commentData = {
+    publicId: user.publicId,
+    nickName: user.nickName,
+    comment,
+  };
 
   try {
-    const blog = await Blog.findOne({ slug }).exec();
+    const blog = await Blog.findById(blogId).exec();
     blog.comment = [...blog.comment, commentData];
     const newBlog = await blog.save();
-    console.log(newBlog);
     res.status(201).json({ comment: newBlog.comment });
-    // return res.send(newBlog);
   } catch (error) {
-    return res.status(400).json({
-      error: error,
-    });
+    console.log(error);
+    return next(
+      new HttpError("tidak bisa menyimpan komen, coba lagi nanti", 500)
+    );
   }
 };
 

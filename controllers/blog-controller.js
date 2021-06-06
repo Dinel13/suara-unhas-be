@@ -14,14 +14,19 @@ const HttpError = require("../models/http-error");
 
 exports.create = async (req, res, next) => {
   const { titleBlog, bodyBlog, categoryBlog, hastagsBlog } = req.body;
+  if (!titleBlog || !bodyBlog || !categoryBlog || !hastagsBlog) {
+    return next(new HttpError("Semua field harus terisi", 422));
+  }
   const arrayHastags = hastagsBlog.split(",");
+  let image;
+  !req.file ? (image = null) : (image = req.file.path);
   const createBlog = new Blog({
     title: titleBlog,
     body: bodyBlog,
     excerpt: smartTrim(bodyBlog, 140, " ", " ..."),
     slug: slugify(titleBlog).toLowerCase(),
     postedBy: req.userData.userId,
-    image: req.file.path,
+    image,
     category: categoryBlog,
     hastags: arrayHastags,
   });

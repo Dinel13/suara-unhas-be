@@ -24,22 +24,22 @@ const blogSchema = new mongoose.Schema(
     },
     image: {
       type: String,
-      required: true,
+      required: false,
     },
     excerpt: {
       type: String,
       max: 1000,
     },
     category: {
-      type : String,
-      required : true
+      type: String,
+      required: true,
     },
     hastags: [{ type: String, required: true }],
     postedBy: {
       type: ObjectId,
       ref: "User",
     },
-    comment : [{type : Object, required : false }]
+    comment: [{ type: Object, required: false }],
   },
   { timestamps: true }
 );

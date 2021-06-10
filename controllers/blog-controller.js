@@ -199,7 +199,11 @@ exports.comment = async (req, res, next) => {
 
 exports.populer = async (req, res, next) => {
   try {
-    const blog = await Blog.find().sort({ comment: -1 }).limit(6);
+    const blog = await Blog.find()
+      .populate("postedBy", "nickName")
+      .select("category title image excerpt slug comment postedBy")
+      .sort({ comment: -1 })
+      .limit(6);
     res.status(200).json({ blog: blog });
   } catch (error) {
     console.log(error);
@@ -209,7 +213,11 @@ exports.populer = async (req, res, next) => {
 
 exports.newest = async (req, res, next) => {
   try {
-    const blog = await Blog.find().sort({ createdAt: -1 }).limit(6);
+    const blog = await Blog.find()
+      .populate("postedBy", "nickName")
+      .select("category title image excerpt slug comment postedBy")
+      .sort({ createdAt: -1 })
+      .limit(6);
     res.status(200).json({ blog: blog });
   } catch (error) {
     console.log(error);
@@ -269,8 +277,6 @@ exports.listByUser = (req, res) => {
     }
     let userId = user._id;
     Blog.find({ postedBy: userId })
-      .populate("categories", "_id name slug")
-      .populate("tags", "_id name slug")
       .populate("postedBy", "_id name username")
       .select("_id title slug postedBy createdAt updatedAt")
       .exec((err, data) => {

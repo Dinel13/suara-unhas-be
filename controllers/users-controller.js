@@ -379,10 +379,25 @@ const getUserData = async (req, res, next) => {
   }
 };
 
+const getUserbyId = async (req, res, next) => {
+  const id = req.params.id;
+  try {
+    const data = await User.findById(id)
+      .populate("blog", "_id slug title")
+      .select("name nickName email fakultas blog bio")
+      .exec();
+    res.status(200).json({ user: data });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("gagal mendapatkan data penulis", 500));
+  }
+};
+
 exports.login = login;
 exports.signup = signup;
 exports.forgotPassword = forgotPassword;
 exports.resetPassword = resetPassword;
 exports.populer = populer;
 exports.getUserData = getUserData;
+exports.getUserById = getUserbyId;
 exports.updateUser = updateUser;

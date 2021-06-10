@@ -8,6 +8,7 @@ const {
   resetPassword,
   forgotPassword,
   updateUser,
+  getUserById,
 } = require("../controllers/users-controller");
 const { authMiddleware } = require("../middleware/auth");
 
@@ -23,7 +24,8 @@ router.post("/user/forgot-password", forgotPassword);
 
 router.put("/user/reset-password/:token", resetPassword);
 
-router.get("/user/:id", getUserData);
+router.get("/user/:id", getUserData); //use public id
+router.get("/userData/:id", getUserById); //use id biasa
 
 router.put("/user/update/:id", authMiddleware, updateUser);
 

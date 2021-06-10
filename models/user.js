@@ -27,7 +27,7 @@ const userSchema = new Schema({
     type: String,
     required: false,
   },
-  blog: [{ type: mongoose.Types.ObjectId, required: true, ref: "blog" }],
+  blog: [{ type: mongoose.Types.ObjectId, required: true, ref: "Blog" }],
   fakultas: {
     type: String,
     require: false,

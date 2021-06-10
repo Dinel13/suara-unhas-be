@@ -371,7 +371,10 @@ const populer = async (req, res, next) => {
 const getUserData = async (req, res, next) => {
   const id = req.params.id;
   try {
-    const data = await User.findOne({ publicId: id }).exec();
+    const data = await User.findOne({ publicId: id })
+      .populate("blog", "_id slug title")
+      .select("name nickName email fakultas blog bio image")
+      .exec();
     res.status(200).json({ user: data });
   } catch (error) {
     console.log(error);
@@ -384,7 +387,7 @@ const getUserbyId = async (req, res, next) => {
   try {
     const data = await User.findById(id)
       .populate("blog", "_id slug title")
-      .select("name nickName email fakultas blog bio")
+      .select("name nickName email fakultas blog bio image")
       .exec();
     res.status(200).json({ user: data });
   } catch (error) {

@@ -1,3 +1,6 @@
+const path = require("path");
+const fs = require("fs");
+
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 
@@ -327,7 +330,6 @@ const updateUser = async (req, res, next) => {
   const id = req.params.id;
   const { name, nickName, publicId, fakultas, bio, motto, alamat, medsos } =
     req.body;
-  console.log(name, nickName, publicId, fakultas, bio, motto, alamat, medsos);
   if (!name || !nickName || !publicId) {
     return next(
       new HttpError(
@@ -361,6 +363,11 @@ const updateUser = async (req, res, next) => {
       image = upUser.image;
     }
   } else {
+    if (upUser.image) {
+      filePath = path.join(__dirname, "..", upUser.image);
+      fs.unlink(filePath, (err) => console.log(err));
+    }
+
     image = req.file.path;
   }
 
@@ -399,7 +406,9 @@ const getUserData = async (req, res, next) => {
   try {
     const data = await User.findOne({ publicId: id })
       .populate("blog", "_id slug title")
-      .select("name nickName email fakultas blog bio image")
+      .select(
+        "name nickName publicId motto email fakultas blog bio image alamat medsos"
+      )
       .exec();
     res.status(200).json({ user: data });
   } catch (error) {
@@ -413,7 +422,9 @@ const getUserbyId = async (req, res, next) => {
   try {
     const data = await User.findById(id)
       .populate("blog", "_id slug title")
-      .select("name nickName email fakultas blog bio image")
+      .select(
+        "name nickName publicId motto email fakultas blog bio image alamat medsos"
+      )
       .exec();
     res.status(200).json({ user: data });
   } catch (error) {
@@ -422,18 +433,18 @@ const getUserbyId = async (req, res, next) => {
   }
 };
 
-const getAllUserData = async (req, res, next) => {
-  const id = req.params.id;
-  try {
-    const data = await User.findById(id)
-      .select("name nickName publicId fakultas bio image motto alamat medsos ")
-      .exec();
-    res.status(200).json({ user: data });
-  } catch (error) {
-    console.log(error);
-    return next(new HttpError("gagal mendapatkan data penulis", 500));
-  }
-};
+// const getAllUserData = async (req, res, next) => {
+//   const id = req.params.id;
+//   try {
+//     const data = await User.findById(id)
+//       .select("name nickName publicId fakultas bio image motto alamat medsos ")
+//       .exec();
+//     res.status(200).json({ user: data });
+//   } catch (error) {
+//     console.log(error);
+//     return next(new HttpError("gagal mendapatkan data penulis", 500));
+//   }
+// };
 
 exports.login = login;
 exports.signup = signup;
@@ -442,6 +453,5 @@ exports.resetPassword = resetPassword;
 exports.populer = populer;
 exports.getUserData = getUserData;
 exports.getUserById = getUserbyId;
-getAllUserData;
-exports.getAllUserData = getAllUserData;
+// exports.getAllUserData = getAllUserData;
 exports.updateUser = updateUser;

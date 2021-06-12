@@ -18,6 +18,7 @@ app.use(express.urlencoded({ extended: false, limit: "20mb" }));
 app.use(cors("*"));
 
 app.use("/uploads/images", express.static(path.join("uploads", "images")));
+app.use("/uploads/users", express.static(path.join("uploads", "users")));
 
 app.use((req, res, next) => {
   res.setHeader("Access-Control-Allow-Origin", "*"); // semua url disinkan

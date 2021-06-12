@@ -328,12 +328,22 @@ const resetPassword = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
   const id = req.params.id;
-  const { name, nickName, publicId, fakultas, bio, motto, alamat, medsos } =
-    req.body;
-  if (!name || !nickName || !publicId) {
+  const { name, nickName, fakultas, bio, motto, alamat, medsos } = req.body;
+  let { publicId } = req.body;
+  if (!name || !nickName) {
     return next(
       new HttpError(
         "Nama lengkap, nama pangilan dan nama akun wajib diisi",
+        422
+      )
+    );
+  }
+
+  publicId = publicId.split(" ")[0];
+  if (!publicId) {
+    return next(
+      new HttpError(
+        "Nama akun wajib diisi dan tidak boleh mengandung spasi",
         422
       )
     );
@@ -407,7 +417,10 @@ const updateUser = async (req, res, next) => {
 
 const populer = async (req, res, next) => {
   try {
-    const data = await User.find().sort({ blog: -1 }).limit(6);
+    const data = await User.find()
+      .sort({ blog: -1 })
+      .select("name image fakultas publicId blog ")
+      .limit(6);
     res.status(200).json({ user: data });
   } catch (error) {
     console.log(error);

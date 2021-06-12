@@ -20,7 +20,7 @@ exports.create = async (req, res, next) => {
   }
   const arrayHastags = hastagsBlog.split(",");
   let image;
-  !req.file ? (image = "uploads/images/default.png") : (image = req.file.path);
+  !req.file ? (image = "uploads/images/default.jpg") : (image = req.file.path);
   const createBlog = new Blog({
     title: titleBlog,
     body: bodyBlog,

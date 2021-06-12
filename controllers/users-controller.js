@@ -325,7 +325,26 @@ const resetPassword = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
   const id = req.params.id;
-  const { name, nickName, bio, image, fakultas, motto } = req.body;
+  const {
+    image,
+    name,
+    nickName,
+    publicId,
+    fakultas,
+    bio,
+    motto,
+    alamat,
+    medsos,
+  } = req.body;
+  console.log(name, nickName, publicId, fakultas, bio, motto, alamat, medsos);
+  if (!name || !nickName || !publicId) {
+    return next(
+      new HttpError(
+        "Nama lengkap, nama pangilan dan nama akun wajib diisi",
+        422
+      )
+    );
+  }
 
   let upUser;
   try {
@@ -342,20 +361,35 @@ const updateUser = async (req, res, next) => {
     return next(new HttpError("Kamu tidak diijinkan untuk mengedit", 401));
   }
 
+  let images;
+  //cek if image emty, coming emty or currently emty
+  if (!req.file) {
+    if (!upUser.image) {
+      image = "uploads/users/default.png";
+    } else {
+      image = upUser.image;
+    }
+  } else {
+    image = req.file.path;
+  }
+
   upUser.name = name;
   upUser.nickName = nickName;
   upUser.bio = bio;
-  upUser.image = req.file.path;
+  upUser.publicId = publicId;
+  upUser.image = image;
   upUser.fakultas = fakultas;
   upUser.motto = motto;
+  upUser.medsos = medsos;
+  upUser.alamat = alamat;
 
   try {
     await user.save();
   } catch (err) {
-    return next(new HttpError("tidak dapat menyimpan", 500));
+    return next(new HttpError("Tidak dapat mengupdate data", 500));
   }
 
-  res.status(200).json({ user: upUser.toObject({ getters: true }) });
+  res.status(200).json({ message: "Berhasil" }); // upUser.toObject({ getters: true })
 };
 
 const populer = async (req, res, next) => {
@@ -396,6 +430,19 @@ const getUserbyId = async (req, res, next) => {
   }
 };
 
+const getAllUserData = async (req, res, next) => {
+  const id = req.params.id;
+  try {
+    const data = await User.findById(id)
+      .select("name nickName publicId fakultas bio image motto alamat medsos ")
+      .exec();
+    res.status(200).json({ user: data });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("gagal mendapatkan data penulis", 500));
+  }
+};
+
 exports.login = login;
 exports.signup = signup;
 exports.forgotPassword = forgotPassword;
@@ -403,4 +450,6 @@ exports.resetPassword = resetPassword;
 exports.populer = populer;
 exports.getUserData = getUserData;
 exports.getUserById = getUserbyId;
+getAllUserData;
+exports.getAllUserData = getAllUserData;
 exports.updateUser = updateUser;

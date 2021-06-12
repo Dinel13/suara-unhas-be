@@ -9,8 +9,10 @@ const {
   forgotPassword,
   updateUser,
   getUserById,
+  getAllUserData,
 } = require("../controllers/users-controller");
 const { authMiddleware } = require("../middleware/auth");
+const fileUpload = require("../middleware/user-img-upload");
 
 const router = express.Router();
 
@@ -26,7 +28,13 @@ router.put("/user/reset-password/:token", resetPassword);
 
 router.get("/user/:id", getUserData); //use public id
 router.get("/userData/:id", getUserById); //use id biasa
+router.get("/allUserData/:id", getAllUserData); //use id biasa
 
-router.put("/user/update/:id", authMiddleware, updateUser);
+router.put(
+  "/user/update/:id",
+  authMiddleware,
+  fileUpload.single("image"),
+  updateUser
+);
 
 module.exports = router;

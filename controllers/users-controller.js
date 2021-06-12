@@ -339,6 +339,18 @@ const updateUser = async (req, res, next) => {
     );
   }
 
+  let exisUser;
+  try {
+    exisUser = await User.findOne({ publicId });
+  } catch (error) {
+    return next(new HttpError("Tidak bisa mencari user", 500));
+  }
+  if (exisUser && exisUser._id.toString() !== req.userData.userId) {
+    return next(
+      new HttpError("Nama akun sudah digunakan, cari yang lain", 422)
+    );
+  }
+
   let upUser;
   try {
     upUser = await User.findById(id);
@@ -385,7 +397,9 @@ const updateUser = async (req, res, next) => {
     await upUser.save();
   } catch (err) {
     console.log(err);
-    return next(new HttpError("Tidak dapat mengupdate data", 500));
+    return next(
+      new HttpError(err.message || "Tidak dapat mengupdate data", 500)
+    );
   }
 
   res.status(200).json({ message: "Berhasil" }); // upUser.toObject({ getters: true })

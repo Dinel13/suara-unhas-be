@@ -325,17 +325,8 @@ const resetPassword = async (req, res, next) => {
 
 const updateUser = async (req, res, next) => {
   const id = req.params.id;
-  const {
-    image,
-    name,
-    nickName,
-    publicId,
-    fakultas,
-    bio,
-    motto,
-    alamat,
-    medsos,
-  } = req.body;
+  const { name, nickName, publicId, fakultas, bio, motto, alamat, medsos } =
+    req.body;
   console.log(name, nickName, publicId, fakultas, bio, motto, alamat, medsos);
   if (!name || !nickName || !publicId) {
     return next(
@@ -361,7 +352,7 @@ const updateUser = async (req, res, next) => {
     return next(new HttpError("Kamu tidak diijinkan untuk mengedit", 401));
   }
 
-  let images;
+  let image;
   //cek if image emty, coming emty or currently emty
   if (!req.file) {
     if (!upUser.image) {
@@ -384,8 +375,9 @@ const updateUser = async (req, res, next) => {
   upUser.alamat = alamat;
 
   try {
-    await user.save();
+    await upUser.save();
   } catch (err) {
+    console.log(err);
     return next(new HttpError("Tidak dapat mengupdate data", 500));
   }
 

@@ -40,5 +40,13 @@ const userSchema = new Schema({
     type: String,
     require: false,
   },
+  medsos: {
+    type: String,
+    require: false,
+  },
+  alamat: {
+    type: String,
+    require: false,
+  },
 });
 module.exports = mongoose.model("User", userSchema);

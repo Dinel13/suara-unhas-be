@@ -223,6 +223,21 @@ exports.newest = async (req, res, next) => {
   }
 };
 
+exports.category = async (req, res, next) => {
+  const category = req.params.category;
+  try {
+    const blog = await Blog.find({ category })
+      .populate("postedBy", "nickName")
+      .select("category title image excerpt slug comment postedBy")
+      .sort({ createdAt: -1 });
+    // .limit(16);
+    res.status(200).json({ blog: blog });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("gagal meload blog", 500));
+  }
+};
+
 exports.listRelated = (req, res) => {
   // console.log(req.body.blog);
   let limit = req.body.limit ? parseInt(req.body.limit) : 3;

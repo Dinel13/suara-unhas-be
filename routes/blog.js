@@ -13,6 +13,7 @@ const {
   listByUser,
   populer,
   newest,
+  category,
 } = require("../controllers/blog-controller");
 const { authMiddleware } = require("../middleware/auth");
 const fileUpload = require("../middleware/file-upload");
@@ -24,6 +25,7 @@ router.get("/blogs/newest", newest);
 router.get("/blog/:slug", read);
 router.post("/blogs/related", listRelated);
 router.get("/blogs/search", listSearch);
+router.get("/blogs/:category", category);
 
 router.post("/blog", authMiddleware, fileUpload.single("imageBlog"), create);
 router.delete("/blog/:slug", authMiddleware, remove);

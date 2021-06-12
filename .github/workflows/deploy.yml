@@ -20,3 +20,4 @@ jobs:
             cd /var/www/suaraunhas
             git pull origin backend-main
             npm install --only=prod
+            pm2 reload srunhas

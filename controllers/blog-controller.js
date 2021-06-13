@@ -16,8 +16,17 @@ const { populate } = require("../models/user");
 
 exports.create = async (req, res, next) => {
   const { titleBlog, bodyBlog, categoryBlog, hastagsBlog } = req.body;
-  if (!titleBlog || !bodyBlog || !categoryBlog || !hastagsBlog) {
-    return next(new HttpError("Semua field harus terisi", 422));
+  if (!titleBlog || !categoryBlog || !hastagsBlog) {
+    return next(new HttpError("Judul, kategori, hastag harus diisi", 422));
+  }
+
+  if (bodyBlog.length <= 150) {
+    return next(
+      new HttpError(
+        "Isi tulisan tidak boleh kosong dan minimal 150 karakter",
+        422
+      )
+    );
   }
   const arrayHastags = hastagsBlog.split(",");
   let image;
@@ -143,61 +152,69 @@ exports.remove = async (req, res, next) => {
   }
 };
 
-exports.update = (req, res, next) => {
+exports.update = async (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
+  const { titleBlog, bodyBlog, categoryBlog, hastagsBlog } = req.body;
+  if (!titleBlog || !categoryBlog || !hastagsBlog) {
+    return next(new HttpError("Judul, kategori, hastag harus diisi", 422));
+  }
 
-  Blog.findOne({ slug }).exec((err, oldBlog) => {
-    if (err) {
-      return next(new HttpError(err, 400));
+  if (bodyBlog.length <= 150) {
+    return next(
+      new HttpError(
+        "Isi tulisan tidak boleh kosong dan minimal 150 karakter",
+        422
+      )
+    );
+  }
+  const arrayHastags = hastagsBlog.split(",");
+
+  let tulisan;
+  try {
+    tulisan = await Blog.findOne({ slug }).populate("postedBy").exec();
+  } catch (error) {
+    return next(new HttpError("Tidak bisa mencari tulisan", 500));
+  }
+
+  if (!tulisan) {
+    return next(new HttpError("Tulisan tidak ditemukan", 404));
+  }
+
+  if (tulisan.postedBy._id.toString() !== req.userData.userId) {
+    return next(
+      new HttpError("Kamu tidak diizinkan untuk mengapus tulisan ini", 401)
+    );
+  }
+
+  // cek image emty now, emty coming, or default
+  let image;
+  if (!req.file) {
+    image = tulisan.image;
+  } else {
+    if (tulisan.image !== "uploads/images/default.jpg") {
+      const filePath = path.join(__dirname, "..", tulisan.image);
+      fs.unlink(filePath, (err) => console.log(err));
     }
-    let form = new formidable.IncomingForm();
-    form.keepExtensions = true;
+    image = req.file.path;
+  }
 
-    form.parse(req, (err, fields, files) => {
-      if (err) {
-        return next(new HttpError(err, 400));
-      }
+  tulisan.title = titleBlog;
+  tulisan.body = bodyBlog;
+  tulisan.excerpt = smartTrim(bodyBlog, 140, " ", " ...");
+  tulisan.slug =
+    slugify(titleBlog).toLowerCase() + "-" + req.userData.name.split(" ")[0];
+  // tulisan.postedBy = req.userData.userId;
+  tulisan.image = image;
+  tulisan.category = categoryBlog;
+  tulisan.hastags = arrayHastags;
 
-      let slugBeforeMerge = oldBlog.slug;
-      oldBlog = _.merge(oldBlog, fields);
-      oldBlog.slug = slugBeforeMerge;
-
-      const { body, desc, categories, tags } = fields;
-
-      if (body) {
-        oldBlog.excerpt = smartTrim(body, 320, " ", " ...");
-        oldBlog.desc = stripHtml(body.substring(0, 160));
-      }
-
-      if (categories) {
-        oldBlog.categories = categories.split(",");
-      }
-
-      if (tags) {
-        oldBlog.tags = tags.split(",");
-      }
-
-      if (files.photo) {
-        if (files.photo.size > 10000000) {
-          return res.status(400).json({
-            error: "Image should be less then 1mb in size",
-          });
-        }
-        oldBlog.photo.data = fs.readFileSync(files.photo.path);
-        oldBlog.photo.contentType = files.photo.type;
-      }
-
-      oldBlog.save((err, result) => {
-        if (err) {
-          return res.status(400).json({
-            error: errorHandler(err),
-          });
-        }
-        // result.photo = undefined;
-        res.json(result);
-      });
-    });
-  });
+  try {
+    const newTulisan = await tulisan.save();
+    res.status(200).json({ slug: newTulisan.slug });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("Tidak bisa mengupdate Tulisan", 500));
+  }
 };
 
 exports.comment = async (req, res, next) => {

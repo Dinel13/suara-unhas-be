@@ -385,11 +385,10 @@ const updateUser = async (req, res, next) => {
       image = upUser.image;
     }
   } else {
-    if (upUser.image) {
+    if (upUser.image !== "uploads/users/default.png") {
       const filePath = path.join(__dirname, "..", upUser.image);
       fs.unlink(filePath, (err) => console.log(err));
     }
-
     image = req.file.path;
   }
 

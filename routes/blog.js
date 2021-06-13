@@ -29,7 +29,12 @@ router.get("/blogs/:category", category);
 
 router.post("/blog", authMiddleware, fileUpload.single("imageBlog"), create);
 router.delete("/blog/:slug", authMiddleware, remove);
-router.put("/blog/:slug", authMiddleware, update);
+router.put(
+  "/blog/:slug",
+  authMiddleware,
+  fileUpload.single("imageBlog"),
+  update
+);
 router.post("/blog/:slug/comment", authMiddleware, comment);
 router.post("/user/blog", authMiddleware, create);
 router.get("/:username/blogs", authMiddleware, listByUser);

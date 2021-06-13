@@ -8,6 +8,7 @@ require("dotenv").config();
 
 const User = require("../models/user");
 const HttpError = require("../models/http-error");
+const { removeImage, checkRemoveImage } = require("../middleware/file-remove");
 
 const signup = async (req, res, next) => {
   let { name, email, password } = req.body;
@@ -50,6 +51,7 @@ const signup = async (req, res, next) => {
     publicId,
     name,
     email,
+    image: "uploads/users/default.png",
     password: HasPassword,
     nickName,
   });
@@ -331,6 +333,7 @@ const updateUser = async (req, res, next) => {
   const { name, nickName, fakultas, bio, motto, alamat, medsos } = req.body;
   let { publicId } = req.body;
   if (!name || !nickName) {
+    removeImage(req.file);
     return next(
       new HttpError(
         "Nama lengkap, nama pangilan dan nama akun wajib diisi",
@@ -341,6 +344,7 @@ const updateUser = async (req, res, next) => {
 
   publicId = publicId.split(" ")[0];
   if (!publicId) {
+    removeImage(req.file);
     return next(
       new HttpError(
         "Nama akun wajib diisi dan tidak boleh mengandung spasi",
@@ -353,9 +357,11 @@ const updateUser = async (req, res, next) => {
   try {
     exisUser = await User.findOne({ publicId });
   } catch (error) {
+    removeImage(req.file);
     return next(new HttpError("Tidak bisa mencari user", 500));
   }
   if (exisUser && exisUser._id.toString() !== req.userData.userId) {
+    removeImage(req.file);
     return next(
       new HttpError("Nama akun sudah digunakan, cari yang lain", 422)
     );
@@ -365,32 +371,41 @@ const updateUser = async (req, res, next) => {
   try {
     upUser = await User.findById(id);
   } catch (error) {
+    removeImage(req.file);
     return next(new HttpError("Tidak bisa mencari user", 500));
   }
 
   if (!upUser) {
+    removeImage(req.file);
     return next(new HttpError("Tidak bisa menemukan user", 404));
   }
 
   if (upUser.id.toString() !== req.userData.userId) {
+    removeImage(req.file);
     return next(new HttpError("Kamu tidak diijinkan untuk mengedit", 401));
   }
 
-  let image;
-  //cek if image emty, coming emty or currently emty
-  if (!req.file) {
-    if (!upUser.image) {
-      image = "uploads/users/default.png";
-    } else {
-      image = upUser.image;
-    }
-  } else {
-    if (upUser.image !== "uploads/users/default.png") {
-      const filePath = path.join(__dirname, "..", upUser.image);
-      fs.unlink(filePath, (err) => console.log(err));
-    }
-    image = req.file.path;
-  }
+  const image = checkRemoveImage(
+    upUser.image,
+    req.file,
+    "uploads/users/default.png"
+  );
+
+  // let image;
+  // //cek if image emty, coming emty or currently emty
+  // if (!req.file) {
+  //   if (!upUser.image) {
+  //     image = "uploads/users/default.png";
+  //   } else {
+  //     image = upUser.image;
+  //   }
+  // } else {
+  //   if (upUser.image !== "uploads/users/default.png") {
+  //     const filePath = path.join(__dirname, "..", upUser.image);
+  //     fs.unlink(filePath, (err) => console.log(err));
+  //   }
+  //   image = req.file.path;
+  // }
 
   upUser.name = name;
   upUser.nickName = nickName;
@@ -405,6 +420,7 @@ const updateUser = async (req, res, next) => {
   try {
     await upUser.save();
   } catch (err) {
+    removeImage(req.file);
     console.log(err);
     return next(
       new HttpError(err.message || "Tidak dapat mengupdate data", 500)

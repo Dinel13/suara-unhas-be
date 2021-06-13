@@ -7,8 +7,8 @@ const blogSchema = new mongoose.Schema(
     title: {
       type: String,
       trim: true,
-      maxlength: 3,
-      minlength: 160,
+      maxlength: 225,
+      minlength: 3,
       required: true,
     },
     slug: {

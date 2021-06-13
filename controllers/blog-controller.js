@@ -13,14 +13,21 @@ const User = require("../models/user");
 const { smartTrim } = require("../helpers/blog");
 const HttpError = require("../models/http-error");
 const { populate } = require("../models/user");
+const {
+  removeImage,
+  removeNotDefaultImage,
+  checkRemoveImage,
+} = require("../middleware/file-remove");
 
 exports.create = async (req, res, next) => {
   const { titleBlog, bodyBlog, categoryBlog, hastagsBlog } = req.body;
   if (!titleBlog || !categoryBlog || !hastagsBlog) {
+    removeImage(req.file);
     return next(new HttpError("Judul, kategori, hastag harus diisi", 422));
   }
 
   if (bodyBlog.length <= 150) {
+    removeImage(req.file);
     return next(
       new HttpError(
         "Isi tulisan tidak boleh kosong dan minimal 150 karakter",
@@ -124,15 +131,17 @@ exports.remove = async (req, res, next) => {
     );
   }
 
-  if (tulisan.image !== "uploads/images/default.jpg") {
-    try {
-      const filePath = path.join(__dirname, "..", tulisan.image);
-      fs.unlink(filePath, (err) => console.log(err));
-    } catch (error) {
-      console.log(error);
-      return next(new HttpError("Tidak bisa menghapus file tulisan", 500));
-    }
-  }
+  removeNotDefaultImage(tulisan.image, "uploads/images/default.jpg");
+
+  // if (tulisan.image !== "uploads/images/default.jpg") {
+  //   try {
+  //     const filePath = path.join(__dirname, "..", tulisan.image);
+  //     fs.unlink(filePath, (err) => console.log(err));
+  //   } catch (error) {
+  //     console.log(error);
+  //     return next(new HttpError("Tidak bisa menghapus file tulisan", 500));
+  //   }
+  // }
 
   // const sess = await moongose.startSession();
   // sess.startTransaction();
@@ -156,10 +165,12 @@ exports.update = async (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
   const { titleBlog, bodyBlog, categoryBlog, hastagsBlog } = req.body;
   if (!titleBlog || !categoryBlog || !hastagsBlog) {
+    removeImage(req.file);
     return next(new HttpError("Judul, kategori, hastag harus diisi", 422));
   }
 
   if (bodyBlog.length <= 150) {
+    removeImage(req.file);
     return next(
       new HttpError(
         "Isi tulisan tidak boleh kosong dan minimal 150 karakter",
@@ -173,30 +184,38 @@ exports.update = async (req, res, next) => {
   try {
     tulisan = await Blog.findOne({ slug }).populate("postedBy").exec();
   } catch (error) {
+    removeImage(req.file);
     return next(new HttpError("Tidak bisa mencari tulisan", 500));
   }
 
   if (!tulisan) {
+    removeImage(req.file);
     return next(new HttpError("Tulisan tidak ditemukan", 404));
   }
 
   if (tulisan.postedBy._id.toString() !== req.userData.userId) {
+    removeImage(req.file);
     return next(
       new HttpError("Kamu tidak diizinkan untuk mengapus tulisan ini", 401)
     );
   }
 
   // cek image emty now, emty coming, or default
-  let image;
-  if (!req.file) {
-    image = tulisan.image;
-  } else {
-    if (tulisan.image !== "uploads/images/default.jpg") {
-      const filePath = path.join(__dirname, "..", tulisan.image);
-      fs.unlink(filePath, (err) => console.log(err));
-    }
-    image = req.file.path;
-  }
+  const image = checkRemoveImage(
+    tulisan.image,
+    req.file,
+    "uploads/images/default.jpg"
+  );
+  // let image;
+  // if (!req.file) {
+  //   image = tulisan.image;
+  // } else {
+  //   if (tulisan.image !== "uploads/images/default.jpg") {
+  //     const filePath = path.join(__dirname, "..", tulisan.image);
+  //     fs.unlink(filePath, (err) => console.log(err));
+  //   }
+  //   image = req.file.path;
+  // }
 
   tulisan.title = titleBlog;
   tulisan.body = bodyBlog;
@@ -241,6 +260,7 @@ exports.comment = async (req, res, next) => {
     const newBlog = await blog.save();
     res.status(201).json({ comment: newBlog.comment });
   } catch (error) {
+    removeImage(req.file);
     console.log(error);
     return next(
       new HttpError("tidak bisa menyimpan komen, coba lagi nanti", 500)

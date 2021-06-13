@@ -6,12 +6,14 @@ const userSchema = new Schema({
   publicId: {
     type: String,
     required: true,
-    maxlength: 64,
+    maxlength: 128,
+    unique: true,
+    index: true,
   },
   email: {
     type: String,
     required: true,
-    maxlength: 64,
+    maxlength: 128,
   },
   password: {
     type: String,
@@ -47,7 +49,7 @@ const userSchema = new Schema({
   motto: {
     type: String,
     require: false,
-    maxlength: 100,
+    maxlength: 225,
   },
   medsos: {
     type: String,

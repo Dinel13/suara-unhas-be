@@ -136,7 +136,7 @@ exports.remove = async (req, res, next) => {
     tulisan.postedBy.blog.pull(tulisan);
     await tulisan.postedBy.save();
     await Blog.deleteOne({ slug }).exec();
-    res.status(204).json({ message: "TUlisan berhasil dihapus" });
+    res.status(204).json({ message: "berhasil" });
   } catch (error) {
     console.log(error);
     return next(new HttpError("Tidak bisa menghapus tulisan", 500));

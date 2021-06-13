@@ -98,10 +98,9 @@ exports.read = (req, res, next) => {
 
 exports.remove = async (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
-
   let tulisan;
   try {
-    tulisan = await Blog.findOne({ slug }).exec();
+    tulisan = await Blog.findOne({ slug }).populate("postedBy").exec();
   } catch (error) {
     return next(new HttpError("Tidak bisa mencari tulisan", 500));
   }
@@ -110,15 +109,15 @@ exports.remove = async (req, res, next) => {
     return next(new HttpError("Tulisan tidak ditemukan", 404));
   }
 
-  if (tulisan.postedBy.toString() !== req.userData.userId) {
+  if (tulisan.postedBy._id.toString() !== req.userData.userId) {
     return next(
       new HttpError("Kamu tidak diizinkan untuk mengapus tulisan ini", 401)
     );
   }
 
-  if (tulisan.image !== "upload/images/default.jpg") {
+  if (tulisan.image !== "uploads/images/default.jpg") {
     try {
-      filePath = path.join(__dirname, "..", tulisan.image);
+      const filePath = path.join(__dirname, "..", tulisan.image);
       fs.unlink(filePath, (err) => console.log(err));
     } catch (error) {
       console.log(error);
@@ -126,8 +125,17 @@ exports.remove = async (req, res, next) => {
     }
   }
 
+  // const sess = await moongose.startSession();
+  // sess.startTransaction();
+  // await place.remove({ session: sess });
+  // place.creator.place.pull(place); // pull adalah metode mongose
+  // await place.creator.save({ session: sess });
+  // await sess.commitTransaction();
+
   try {
-    const result = await Blog.deleteOne({ slug }).exec();
+    tulisan.postedBy.blog.pull(tulisan);
+    await tulisan.postedBy.save();
+    await Blog.deleteOne({ slug }).exec();
     res.status(204).json({ message: "TUlisan berhasil dihapus" });
   } catch (error) {
     console.log(error);

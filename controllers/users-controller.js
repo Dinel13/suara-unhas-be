@@ -386,7 +386,7 @@ const updateUser = async (req, res, next) => {
     }
   } else {
     if (upUser.image) {
-      filePath = path.join(__dirname, "..", upUser.image);
+      const filePath = path.join(__dirname, "..", upUser.image);
       fs.unlink(filePath, (err) => console.log(err));
     }
 

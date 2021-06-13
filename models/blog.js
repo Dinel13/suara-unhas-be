@@ -7,8 +7,8 @@ const blogSchema = new mongoose.Schema(
     title: {
       type: String,
       trim: true,
-      min: 3,
-      max: 160,
+      maxlength: 3,
+      minlength: 160,
       required: true,
     },
     slug: {
@@ -19,8 +19,8 @@ const blogSchema = new mongoose.Schema(
     body: {
       type: {},
       required: true,
-      min: 200,
-      max: 2000000,
+      minlenght: 150,
+      maxlength: 2000000,
     },
     image: {
       type: String,

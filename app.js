@@ -53,6 +53,7 @@ mongoose
   .connect(url, {
     useNewUrlParser: true,
     useUnifiedTopology: true,
+    useFindAndModify: true,
   })
   .then((result) => {
     app.listen(process.env.PORT || 8080);

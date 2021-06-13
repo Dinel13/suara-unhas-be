@@ -1,3 +1,4 @@
+const path = require("path");
 const fs = require("fs");
 
 const moongose = require("mongoose");
@@ -95,16 +96,43 @@ exports.read = (req, res, next) => {
     });
 };
 
-exports.remove = (req, res, next) => {
+exports.remove = async (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
-  Blog.findOneAndRemove({ slug }).exec((err, data) => {
-    if (err) {
-      return next(new HttpError(err, 400));
+
+  let tulisan;
+  try {
+    tulisan = await Blog.findOne({ slug }).exec();
+  } catch (error) {
+    return next(new HttpError("Tidak bisa mencari tulisan", 500));
+  }
+
+  if (!tulisan) {
+    return next(new HttpError("Tulisan tidak ditemukan", 404));
+  }
+
+  if (tulisan.postedBy.toString() !== req.userData.userId) {
+    return next(
+      new HttpError("Kamu tidak diizinkan untuk mengapus tulisan ini", 401)
+    );
+  }
+
+  if (tulisan.image !== "upload/images/default.jpg") {
+    try {
+      filePath = path.join(__dirname, "..", tulisan.image);
+      fs.unlink(filePath, (err) => console.log(err));
+    } catch (error) {
+      console.log(error);
+      return next(new HttpError("Tidak bisa menghapus file tulisan", 500));
     }
-    res.json({
-      message: "Blog deleted successfully",
-    });
-  });
+  }
+
+  try {
+    const result = await Blog.deleteOne({ slug }).exec();
+    res.status(204).json({ message: "TUlisan berhasil dihapus" });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("Tidak bisa menghapus tulisan", 500));
+  }
 };
 
 exports.update = (req, res, next) => {

@@ -132,17 +132,6 @@ exports.remove = async (req, res, next) => {
   }
 
   removeNotDefaultImage(tulisan.image, "uploads/images/default.jpg");
-
-  // if (tulisan.image !== "uploads/images/default.jpg") {
-  //   try {
-  //     const filePath = path.join(__dirname, "..", tulisan.image);
-  //     fs.unlink(filePath, (err) => console.log(err));
-  //   } catch (error) {
-  //     console.log(error);
-  //     return next(new HttpError("Tidak bisa menghapus file tulisan", 500));
-  //   }
-  // }
-
   // const sess = await moongose.startSession();
   // sess.startTransaction();
   // await place.remove({ session: sess });
@@ -206,16 +195,6 @@ exports.update = async (req, res, next) => {
     req.file,
     "uploads/images/default.jpg"
   );
-  // let image;
-  // if (!req.file) {
-  //   image = tulisan.image;
-  // } else {
-  //   if (tulisan.image !== "uploads/images/default.jpg") {
-  //     const filePath = path.join(__dirname, "..", tulisan.image);
-  //     fs.unlink(filePath, (err) => console.log(err));
-  //   }
-  //   image = req.file.path;
-  // }
 
   tulisan.title = titleBlog;
   tulisan.body = bodyBlog;
@@ -331,26 +310,28 @@ exports.listRelated = (req, res) => {
 };
 
 //
-exports.listSearch = (req, res) => {
+exports.listSearch = async (req, res, next) => {
   console.log(req.query);
   const { search } = req.query;
   if (search) {
-    Blog.find(
-      {
+    try {
+      const blog = await Blog.find({
         $or: [
           { title: { $regex: search, $options: "i" } },
           { body: { $regex: search, $options: "i" } },
         ],
-      },
-      (err, blogs) => {
-        if (err) {
-          return res.status(400).json({
-            error: errorHandler(err),
-          });
-        }
-        res.json(blogs);
-      }
-    ).select("-photo -body");
+      })
+        .populate("postedBy", "nickName")
+        .select("category title image excerpt slug comment postedBy")
+        .sort({ createdAt: -1 })
+        .limit(16);
+      res.status(200).json({ blog: blog });
+    } catch (error) {
+      console.log(error);
+      return next(new HttpError("Tidak bisa mecari tulisan", 500));
+    }
+  } else {
+    return next(new HttpError("Tidak ada kata kunci", 404));
   }
 };
 

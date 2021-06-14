@@ -391,22 +391,6 @@ const updateUser = async (req, res, next) => {
     "uploads/users/default.png"
   );
 
-  // let image;
-  // //cek if image emty, coming emty or currently emty
-  // if (!req.file) {
-  //   if (!upUser.image) {
-  //     image = "uploads/users/default.png";
-  //   } else {
-  //     image = upUser.image;
-  //   }
-  // } else {
-  //   if (upUser.image !== "uploads/users/default.png") {
-  //     const filePath = path.join(__dirname, "..", upUser.image);
-  //     fs.unlink(filePath, (err) => console.log(err));
-  //   }
-  //   image = req.file.path;
-  // }
-
   upUser.name = name;
   upUser.nickName = nickName;
   upUser.bio = bio;
@@ -474,19 +458,6 @@ const getUserbyId = async (req, res, next) => {
     return next(new HttpError("gagal mendapatkan data penulis", 500));
   }
 };
-
-// const getAllUserData = async (req, res, next) => {
-//   const id = req.params.id;
-//   try {
-//     const data = await User.findById(id)
-//       .select("name nickName publicId fakultas bio image motto alamat medsos ")
-//       .exec();
-//     res.status(200).json({ user: data });
-//   } catch (error) {
-//     console.log(error);
-//     return next(new HttpError("gagal mendapatkan data penulis", 500));
-//   }
-// };
 
 exports.login = login;
 exports.signup = signup;

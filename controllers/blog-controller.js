@@ -91,7 +91,6 @@ exports.list = async (req, res, next) => {
   } else {
     page = 12 * (page - 1);
   }
-  console.log(page);
   try {
     const data = await Blog.find()
       .populate("postedBy", "nickName publicId")

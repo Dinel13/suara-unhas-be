@@ -83,24 +83,35 @@ exports.create = async (req, res, next) => {
 
 // list, listAllBlogsCategoriesTags, read, remove, update
 
-exports.list = (req, res, next) => {
-  Blog.find({})
-    .populate("postedBy", "nickName publicId")
-    .select("title slug excerpt category comment image postedBy createdAt")
-    .sort({ createdAt: -1 })
-    .limit(18)
-    .exec((err, data) => {
-      if (err) {
-        return next(new HttpError(err, 400));
-      }
-      res.json(data);
-    });
+exports.list = async (req, res, next) => {
+  let page = req.params.page;
+  //if page 1 will ignore the skip
+  if (page == 1) {
+    page = 0;
+  } else {
+    page = 12 * (page - 1);
+  }
+  console.log(page);
+  try {
+    const data = await Blog.find()
+      .populate("postedBy", "nickName publicId")
+      .select("title slug excerpt category comment image postedBy createdAt")
+      .limit(12)
+      .skip(page)
+      .sort({ createdAt: -1 })
+      .exec();
+
+    res.status(200).send({ data });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("Tidak bisa mendapatkan tulisan", 500));
+  }
 };
 
 exports.read = (req, res, next) => {
   const slug = req.params.slug.toLowerCase();
   Blog.findOne({ slug })
-    .populate("postedBy", "publicId nickName")
+    .populate("postedBy", "publicId name image")
     .select(
       "_id title body slug category comment image hastags postedBy createdAt"
     )
@@ -281,8 +292,8 @@ exports.category = async (req, res, next) => {
     const blog = await Blog.find({ category })
       .populate("postedBy", "nickName")
       .select("category title image excerpt slug comment postedBy")
-      .sort({ createdAt: -1 });
-    // .limit(16);
+      .sort({ createdAt: -1 })
+      .limit(32);
     res.status(200).json({ blog: blog });
   } catch (error) {
     console.log(error);
@@ -311,11 +322,10 @@ exports.listRelated = (req, res) => {
 
 //
 exports.listSearch = async (req, res, next) => {
-  console.log(req.query);
   const { search } = req.query;
-  if (search.length < 4) {
+  if (search.length < 5) {
     return next(
-      new HttpError("Kata kunci terlalu singkat, minimal 4 huruf", 422)
+      new HttpError("Kata kunci terlalu singkat, minimal 5 huruf", 422)
     );
   }
   if (search) {
@@ -330,7 +340,7 @@ exports.listSearch = async (req, res, next) => {
         .populate("postedBy", "nickName")
         .select("category title image excerpt slug comment postedBy")
         .sort({ createdAt: -1 })
-        .limit(16);
+        .limit(32);
       res.status(200).json({ blog: blog });
     } catch (error) {
       console.log(error);

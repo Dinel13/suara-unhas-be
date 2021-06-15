@@ -19,7 +19,7 @@ const { authMiddleware } = require("../middleware/auth");
 const fileUpload = require("../middleware/file-upload");
 const HttpError = require("../models/http-error");
 
-router.get("/blogs", list);
+router.get("/all/:page", list);
 router.get("/blogs/populer", populer);
 router.get("/blogs/newest", newest);
 router.get("/blog/:slug", read);

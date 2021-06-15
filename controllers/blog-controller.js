@@ -313,12 +313,18 @@ exports.listRelated = (req, res) => {
 exports.listSearch = async (req, res, next) => {
   console.log(req.query);
   const { search } = req.query;
+  if (search.length < 4) {
+    return next(
+      new HttpError("Kata kunci terlalu singkat, minimal 4 huruf", 422)
+    );
+  }
   if (search) {
     try {
       const blog = await Blog.find({
         $or: [
           { title: { $regex: search, $options: "i" } },
           { body: { $regex: search, $options: "i" } },
+          // { postedBy[nickName]: { $regex: search, $options: "i" } },
         ],
       })
         .populate("postedBy", "nickName")

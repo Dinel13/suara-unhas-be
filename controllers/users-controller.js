@@ -3,6 +3,7 @@ const fs = require("fs");
 
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
+const nodemailer = require("nodemailer");
 
 require("dotenv").config();
 

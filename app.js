@@ -4,8 +4,9 @@ const express = require("express");
 const mongoose = require("mongoose");
 const cors = require("cors");
 
-const userRoute = require("./routes/user-route");
+const userRoutes = require("./routes/user-route");
 const blogRoutes = require("./routes/blog");
+const otherRoutes = require("./routes/other");
 const HttpError = require("./models/http-error");
 
 const app = express();
@@ -31,8 +32,9 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use("/api", userRoute);
+app.use("/api", userRoutes);
 app.use("/api", blogRoutes);
+app.use("/api", otherRoutes);
 
 //midleware sebagai defaul jika route tidak ditemukan
 app.use((req, res, next) => {

@@ -11,6 +11,19 @@ const User = require("../models/user");
 const HttpError = require("../models/http-error");
 const { removeImage, checkRemoveImage } = require("../middleware/file-remove");
 
+const transporter = nodemailer.createTransport({
+  service: "gmail",
+  host: "smtp.gmail.com",
+  auth: {
+    type: "OAuth2",
+    user: process.env.MAIL_USERNAME,
+    pass: process.env.MAIL_PASSWORD,
+    clientId: process.env.OAUTH_CLIENTID,
+    clientSecret: process.env.OAUTH_CLIENT_SECRET,
+    refreshToken: process.env.OAUTH_REFRESH_TOKEN,
+  },
+});
+
 const signup = async (req, res, next) => {
   let { name, email, password } = req.body;
 
@@ -157,12 +170,9 @@ const login = async (req, res, next) => {
 
 const forgotPassword = async (req, res, next) => {
   let { email } = req.body;
-
   if (!email) {
     return next(new HttpError("Email field harus diisi", 422));
   }
-
-  console.log(email);
   email = email.toLowerCase();
 
   let user;
@@ -189,66 +199,49 @@ const forgotPassword = async (req, res, next) => {
       new HttpError("Tidak bisa membuat token, coba lagi nanti.", 500)
     );
   }
-  // test without email
-  // res.status(200).json({ ds: { token } });
-
-  const transporter = nodemailer.createTransport({
-    service: "gmail",
-    host: "smtp.gmail.com",
-    auth: {
-      type: "OAuth2",
-      user: process.env.MAIL_USERNAME,
-      pass: process.env.MAIL_PASSWORD,
-      clientId: process.env.OAUTH_CLIENTID,
-      clientSecret: process.env.OAUTH_CLIENT_SECRET,
-      refreshToken: process.env.OAUTH_REFRESH_TOKEN,
-    },
-  });
 
   const mailOptions = {
-    from: "fadullah2021@gmail.com",
+    from: "suaraunhas@gmail.com",
     to: email,
-    subject: "Suara Unhas || Password reset",
+    subject: "Reset password SuaraUnhas",
     html: `
     <h2>Hi, ${user.name}</h2>
-    <h4>Kamu telah meminta untuk mereset password</h4>
+    <h3>Kamu telah meminta untuk mereset password</h3>
     <p>Klik tombol dibawah untuk membuat password baru.</p>
     <a
-      href="http://localhost:3000/reset/${token}"
+      href="https://suara-unhas.web.app/reset-password/${token}"
       style="
         padding: 8px 10px;
         text-decoration: none;
         color: black;
         font-weight: 700;
-        background-color: #278a27;
+        background-color: #bd394c;
         border-radius: 8px;
       "
     >
-      reset password
+      Reset Password
     </a>
-    <p>jika link diatas tidak berfunsi, maka gunakan link dibawah ini</p>
+    <p>jika tombol diatas tidak berfunsi, maka gunakan link dibawah ini</p>
 
-    <a href="http://localhost:3000/reset/${token}"
-      >http://localhost:3000/reset/${token}</a
+    <a href="https://suara-unhas.web.app/reset-password/${token}"
+      >https://suara-unhas.web.app/reset-password/${token}</a
     >
     <br />
     <h4>Terima kasih</h4>
-    <p>Team Manut || B21-CAP1099</p>p>
+    <p>SuaraUnhas Team</p>p>
     `,
   };
-  transporter.sendMail(mailOptions, function (error, info) {
-    if (error) {
-      console.log(error);
-      return next(
-        new HttpError("Tidak bisa mengirim email, coba lagi nanti.", 500)
-      );
-    } else {
-      return res.status(201).json({
-        message: `Email untuk mereset telah dikirim ke alamat ${email}. Link akan kadarluarsa dalam 10 menit.`,
-        // token: token,
-      });
-    }
-  });
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Message sent: %s", info.messageId);
+    res.status(200).json({
+      message: `Email untuk mereset telah dikirim ke alamat ${email}. Link akan kadarluarsa dalam 10 menit.`,
+    });
+  } catch (error) {
+    console.log(error);
+    return next(new HttpError("Tidak bisa mereset, coba lagi nanti.", 500));
+  }
 };
 
 const resetPassword = async (req, res, next) => {

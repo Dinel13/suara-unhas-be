@@ -1,20 +1,20 @@
-const mongoose = require('mongoose');
+const mongoose = require("mongoose");
 
-const tagSchema = new mongoose.Schema(
-    {
-        name: {
-            type: String,
-            trim: true,
-            required: true,
-            maxlength: 32
-        },
-        slug: {
-            type: String,
-            unique: true,
-            index: true
-        }
+const newsletterSchema = new mongoose.Schema(
+  {
+    name: {
+      type: String,
+      required: true,
+      maxlength: 32,
     },
-    { timestamps: true }
+    email: {
+      type: String,
+      unique: true,
+      index: true,
+      maxlength: 64,
+    },
+  },
+  { timestamps: true }
 );
 
-module.exports = mongoose.model('Tag', tagSchema);
+module.exports = mongoose.model("Newsletter", newsletterSchema);

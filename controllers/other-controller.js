@@ -46,6 +46,37 @@ exports.feedback = async (req, res, next) => {
   }
 };
 
+exports.bantuan = async (req, res, next) => {
+  const { email, message, name } = req.body;
+
+  if (!email || !name || !message) {
+    return next(new HttpError("email, nama dan pesan harus diisi", 422));
+  }
+  const mailOptions = {
+    from: "suaraunhas@gmail.com",
+    to: "suaraunhas@gmail.com",
+    subject: "Bantuan Suara Unhas",
+    html: `
+    <h2>dari ${name}</h2>
+    <h3>${email}</h3>
+    <p>${message}</p>    
+    `,
+  };
+
+  try {
+    const info = await transporter.sendMail(mailOptions);
+    console.log("Message sent: %s", info.messageId);
+    res.status(200).json({
+      message: `Permintaan bantuan kamu berhasil dikirim.`,
+    });
+  } catch (error) {
+    console.log(error);
+    return next(
+      new HttpError("Tidak bisa meminta bantuan, coba lagi nanti.", 500)
+    );
+  }
+};
+
 exports.subNewsletter = async (req, res, next) => {
   let { name, email } = req.body;
   if (!name || !email) {

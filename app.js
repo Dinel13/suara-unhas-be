@@ -5,9 +5,7 @@ const mongoose = require("mongoose");
 const cors = require("cors");
 
 const userRoute = require("./routes/user-route");
-const categoryRoutes = require("./routes/category");
 const blogRoutes = require("./routes/blog");
-const tagRoutes = require("./routes/tag");
 const HttpError = require("./models/http-error");
 
 const app = express();
@@ -34,8 +32,6 @@ app.use((req, res, next) => {
 });
 
 app.use("/api", userRoute);
-app.use("/api", categoryRoutes);
-app.use("/api", tagRoutes);
 app.use("/api", blogRoutes);
 
 //midleware sebagai defaul jika route tidak ditemukan
